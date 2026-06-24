@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Upload, X, ZoomIn, Move, Check } from 'lucide-react';
+import { Upload, X, ZoomIn, Move, Check, Loader2 } from 'lucide-react';
 import { createPortal } from 'react-dom';
 
 interface ImageCropperProps {
@@ -20,6 +20,8 @@ export default function ImageCropper({ label, aspectRatio, value, onChange }: Im
   const [panY, setPanY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
 
   const imageRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -62,7 +64,7 @@ export default function ImageCropper({ label, aspectRatio, value, onChange }: Im
   };
 
   // Crop calculation and canvas drawing
-  const handleCrop = () => {
+  const handleCrop = async () => {
     const img = imageRef.current;
     if (!img) return;
 
@@ -109,14 +111,36 @@ export default function ImageCropper({ label, aspectRatio, value, onChange }: Im
       );
 
       const croppedBase64 = canvas.toDataURL('image/jpeg', 0.85);
-      onChange(croppedBase64);
+      
+      setUploading(true);
+      setUploadError('');
+
+      // Send to folder upload API
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ base64: croppedBase64 }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to upload image');
+      }
+
+      onChange(data.url);
       setIsModalOpen(false);
       setImageSrc(null);
       
       // Clear file input value to allow uploading same file again
       if (fileInputRef.current) fileInputRef.current.value = '';
-    } catch (err) {
-      console.error('Error drawing cropped image:', err);
+    } catch (err: any) {
+      console.error('Error drawing/uploading image:', err);
+      setUploadError(err.message || 'Failed to upload image. Please try again.');
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -253,24 +277,43 @@ export default function ImageCropper({ label, aspectRatio, value, onChange }: Im
                   </span>
                 </div>
 
+                {/* Upload Error Message */}
+                {uploadError && (
+                  <div className="mb-4 p-3 bg-red-500/10 border border-red-500/25 rounded-xl text-red-400 text-xs">
+                    {uploadError}
+                  </div>
+                )}
+
                 {/* Actions */}
                 <div className="flex gap-3">
                   <button
                     type="button"
+                    disabled={uploading}
                     onClick={() => {
+                      if (uploading) return;
                       setIsModalOpen(false);
                       setImageSrc(null);
+                      setUploadError('');
                     }}
-                    className="w-1/2 py-3 rounded-xl border border-gray-800 hover:border-gray-700 text-gray-400 hover:text-white text-sm font-semibold transition-all"
+                    className="w-1/2 py-3 rounded-xl border border-gray-800 hover:border-gray-700 text-gray-400 hover:text-white text-sm font-semibold transition-all disabled:opacity-50"
                   >
                     Cancel
                   </button>
                   <button
                     type="button"
+                    disabled={uploading}
                     onClick={handleCrop}
-                    className="w-1/2 py-3 rounded-xl bg-gradient-to-r from-[#D4A437] to-[#B88E2F] text-black font-bold text-sm shadow-[0_0_10px_rgba(212,164,55,0.15)] flex items-center justify-center gap-2 transition-all cursor-pointer"
+                    className="w-1/2 py-3 rounded-xl bg-gradient-to-r from-[#D4A437] to-[#B88E2F] text-black font-bold text-sm shadow-[0_0_10px_rgba(212,164,55,0.15)] flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
                   >
-                    <Check className="w-4 h-4" /> Crop & Save
+                    {uploading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" /> Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Check className="w-4 h-4" /> Crop & Save
+                      </>
+                    )}
                   </button>
                 </div>
 
