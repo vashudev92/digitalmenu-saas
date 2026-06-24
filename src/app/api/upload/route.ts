@@ -71,6 +71,6 @@ export async function POST(request: Request) {
     }
   } catch (error: any) {
     console.error('[API/Upload] Error processing upload:', error);
-    return NextResponse.json({ error: 'Failed to process image upload' }, { status: 500 });
+    return NextResponse.json({ error: `Upload error: ${error.message || 'Unknown error'}` }, { status: 500 });
   }
 }
