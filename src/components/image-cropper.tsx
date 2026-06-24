@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Upload, X, ZoomIn, Move, Check } from 'lucide-react';
+import { createPortal } from 'react-dom';
 
 interface ImageCropperProps {
   label: string;
@@ -11,6 +12,7 @@ interface ImageCropperProps {
 }
 
 export default function ImageCropper({ label, aspectRatio, value, onChange }: ImageCropperProps) {
+  const [mounted, setMounted] = useState(false);
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [zoom, setZoom] = useState(1);
@@ -24,6 +26,10 @@ export default function ImageCropper({ label, aspectRatio, value, onChange }: Im
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Reset states when a new image is loaded
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -157,119 +163,122 @@ export default function ImageCropper({ label, aspectRatio, value, onChange }: Im
       </div>
 
       {/* CROP MODAL OVERLAY */}
-      {isModalOpen && imageSrc && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
-          <div className="w-full max-w-md glass-gold rounded-3xl p-6 relative flex flex-col">
-            
-            {/* Modal Header */}
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-serif text-lg font-bold text-white flex items-center gap-2">
-                <Move className="w-4 h-4 text-[#D4A437]" /> Adjust Crop Frame
-              </h3>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsModalOpen(false);
-                  setImageSrc(null);
-                }}
-                className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-gray-900"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Viewport Cropper Container */}
-            <div
-              ref={containerRef}
-              onMouseDown={(e) => handleStart(e.clientX, e.clientY)}
-              onMouseMove={(e) => handleMove(e.clientX, e.clientY)}
-              onMouseUp={handleEnd}
-              onMouseLeave={handleEnd}
-              onTouchStart={(e) => handleStart(e.touches[0].clientX, e.touches[0].clientY)}
-              onTouchMove={(e) => handleMove(e.touches[0].clientX, e.touches[0].clientY)}
-              onTouchEnd={handleEnd}
-              className="relative w-full h-[320px] bg-[#050505] overflow-hidden rounded-2xl flex items-center justify-center border border-gray-950 cursor-grab active:cursor-grabbing select-none"
-            >
-              {/* Image under viewport */}
-              <img
-                ref={imageRef}
-                src={imageSrc}
-                alt="To Crop"
-                draggable={false}
-                style={{
-                  transform: `translate(${panX}px, ${panY}px) scale(${zoom})`,
-                  transformOrigin: 'center center',
-                  maxHeight: '80%',
-                  maxWidth: '80%',
-                }}
-                className="pointer-events-none transition-transform duration-75"
-              />
-
-              {/* Crop Box Frame Overlay Mask */}
-              <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                {/* Upper Dark Mask */}
-                <div className="absolute inset-0 bg-black/60 z-10" />
-
-                {/* Viewport Cutout */}
-                <div
-                  style={{
-                    width: aspectRatio === 'square' ? '280px' : '300px',
-                    height: aspectRatio === 'square' ? '280px' : '100px',
-                  }}
-                  className="border-2 border-[#D4A437] rounded-xl shadow-[0_0_0_9999px_rgba(10,10,10,0.65)] bg-transparent z-20 relative pointer-events-none"
-                />
-              </div>
-            </div>
-
-            {/* Sliders */}
-            <div className="space-y-4 my-6">
-              {/* Zoom Slider */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs text-gray-400 font-semibold uppercase">
-                  <span className="flex items-center gap-1"><ZoomIn className="w-3.5 h-3.5" /> Scale / Zoom</span>
-                  <span>{zoom.toFixed(1)}x</span>
+      {isModalOpen && imageSrc && mounted
+        ? createPortal(
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
+              <div className="w-full max-w-md glass-gold rounded-3xl p-6 relative flex flex-col">
+                
+                {/* Modal Header */}
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-serif text-lg font-bold text-white flex items-center gap-2">
+                    <Move className="w-4 h-4 text-[#D4A437]" /> Adjust Crop Frame
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsModalOpen(false);
+                      setImageSrc(null);
+                    }}
+                    className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-gray-900"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
-                <input
-                  type="range"
-                  min="0.5"
-                  max="3"
-                  step="0.05"
-                  value={zoom}
-                  onChange={(e) => setZoom(Number(e.target.value))}
-                  className="w-full accent-[#D4A437] bg-gray-800 rounded-lg appearance-none h-1.5 cursor-pointer"
-                />
+
+                {/* Viewport Cropper Container */}
+                <div
+                  ref={containerRef}
+                  onMouseDown={(e) => handleStart(e.clientX, e.clientY)}
+                  onMouseMove={(e) => handleMove(e.clientX, e.clientY)}
+                  onMouseUp={handleEnd}
+                  onMouseLeave={handleEnd}
+                  onTouchStart={(e) => handleStart(e.touches[0].clientX, e.touches[0].clientY)}
+                  onTouchMove={(e) => handleMove(e.touches[0].clientX, e.touches[0].clientY)}
+                  onTouchEnd={handleEnd}
+                  className="relative w-full h-[320px] bg-[#050505] overflow-hidden rounded-2xl flex items-center justify-center border border-gray-950 cursor-grab active:cursor-grabbing select-none"
+                >
+                  {/* Image under viewport */}
+                  <img
+                    ref={imageRef}
+                    src={imageSrc}
+                    alt="To Crop"
+                    draggable={false}
+                    style={{
+                      transform: `translate(${panX}px, ${panY}px) scale(${zoom})`,
+                      transformOrigin: 'center center',
+                      maxHeight: '80%',
+                      maxWidth: '80%',
+                    }}
+                    className="pointer-events-none transition-transform duration-75"
+                  />
+
+                  {/* Crop Box Frame Overlay Mask */}
+                  <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                    {/* Upper Dark Mask */}
+                    <div className="absolute inset-0 bg-black/60 z-10" />
+
+                    {/* Viewport Cutout */}
+                    <div
+                      style={{
+                        width: aspectRatio === 'square' ? '280px' : '300px',
+                        height: aspectRatio === 'square' ? '280px' : '100px',
+                      }}
+                      className="border-2 border-[#D4A437] rounded-xl shadow-[0_0_0_9999px_rgba(10,10,10,0.65)] bg-transparent z-20 relative pointer-events-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Sliders */}
+                <div className="space-y-4 my-6">
+                  {/* Zoom Slider */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs text-gray-400 font-semibold uppercase">
+                      <span className="flex items-center gap-1"><ZoomIn className="w-3.5 h-3.5" /> Scale / Zoom</span>
+                      <span>{zoom.toFixed(1)}x</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0.5"
+                      max="3"
+                      step="0.05"
+                      value={zoom}
+                      onChange={(e) => setZoom(Number(e.target.value))}
+                      className="w-full accent-[#D4A437] bg-gray-800 rounded-lg appearance-none h-1.5 cursor-pointer"
+                    />
+                  </div>
+
+                  {/* Offset adjustment indicators for touch help */}
+                  <span className="block text-[10px] text-gray-500 text-center font-medium">
+                    Drag the image directly or pinch to adjust crop offsets.
+                  </span>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsModalOpen(false);
+                      setImageSrc(null);
+                    }}
+                    className="w-1/2 py-3 rounded-xl border border-gray-800 hover:border-gray-700 text-gray-400 hover:text-white text-sm font-semibold transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCrop}
+                    className="w-1/2 py-3 rounded-xl bg-gradient-to-r from-[#D4A437] to-[#B88E2F] text-black font-bold text-sm shadow-[0_0_10px_rgba(212,164,55,0.15)] flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  >
+                    <Check className="w-4 h-4" /> Crop & Save
+                  </button>
+                </div>
+
               </div>
-
-              {/* Offset adjustment indicators for touch help */}
-              <span className="block text-[10px] text-gray-500 text-center font-medium">
-                Drag the image directly or pinch to adjust crop offsets.
-              </span>
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsModalOpen(false);
-                  setImageSrc(null);
-                }}
-                className="w-1/2 py-3 rounded-xl border border-gray-800 hover:border-gray-700 text-gray-400 hover:text-white text-sm font-semibold transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleCrop}
-                className="w-1/2 py-3 rounded-xl bg-gradient-to-r from-[#D4A437] to-[#B88E2F] text-black font-bold text-sm shadow-[0_0_10px_rgba(212,164,55,0.15)] flex items-center justify-center gap-2 transition-all cursor-pointer"
-              >
-                <Check className="w-4 h-4" /> Crop & Save
-              </button>
-            </div>
-
-          </div>
-        </div>
-      )}
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   );
 }

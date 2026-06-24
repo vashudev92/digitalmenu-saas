@@ -12,6 +12,11 @@ export default function QRCodePage() {
   const [copied, setCopied] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateType>('TABLE_TENT');
   
+  // Custom template texts
+  const [welcomeText, setWelcomeText] = useState('');
+  const [instructionText, setInstructionText] = useState('');
+  const [thankYouText, setThankYouText] = useState('');
+
   // DB QR states
   const [restaurantName, setRestaurantName] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
@@ -43,6 +48,37 @@ export default function QRCodePage() {
     loadQRCode();
   }, []);
 
+  const getPlaceholders = () => {
+    switch (selectedTemplate) {
+      case 'TABLE_TENT':
+        return {
+          welcome: 'Fine Dining Menu',
+          instruction: 'Scan QR Code to Browse Menu',
+          thankYou: 'Thank you for dining with us!',
+        };
+      case 'ACRYLIC_STAND':
+        return {
+          welcome: 'Welcome to Our Table',
+          instruction: 'Scan QR to View Menu',
+          thankYou: 'Thank you for dining with us!',
+        };
+      case 'COUNTER_CARD':
+        return {
+          welcome: 'Welcome! Scan the QR code to explore our gourmet menu offerings.',
+          instruction: 'Scan & Browse',
+          thankYou: 'Digital Menu Viewer - No Cart Checkout Needed',
+        };
+      default:
+        return {
+          welcome: 'Welcome to Our Table',
+          instruction: 'Scan QR to View Menu',
+          thankYou: 'Thank you for dining with us!',
+        };
+    }
+  };
+
+  const placeholders = getPlaceholders();
+
   const handleCopyLink = () => {
     navigator.clipboard.writeText(scanUrl);
     setCopied(true);
@@ -56,6 +92,191 @@ export default function QRCodePage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleDownloadQR = async () => {
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = 800;
+      canvas.height = 1200;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      // 1. Draw premium dark gradient background
+      const grad = ctx.createLinearGradient(0, 0, 0, 1200);
+      grad.addColorStop(0, '#0F0C08');
+      grad.addColorStop(0.5, '#1A1510');
+      grad.addColorStop(1, '#0A0A0A');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 800, 1200);
+
+      // 2. Draw gold double borders
+      // Outer border
+      ctx.strokeStyle = '#D4A437';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(18, 18, 800 - 36, 1200 - 36);
+      // Inner border
+      ctx.strokeStyle = '#D4A437';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(28, 28, 800 - 56, 1200 - 56);
+
+      // Helper function to load images with crossOrigin support
+      const loadImage = (src: string): Promise<HTMLImageElement | null> => {
+        return new Promise((resolve) => {
+          if (!src) return resolve(null);
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.src = src;
+          img.onload = () => resolve(img);
+          img.onerror = () => resolve(null);
+        });
+      };
+
+      // Load logo and QR code images
+      const [logoImg, qrImg] = await Promise.all([
+        loadImage(logoUrl),
+        loadImage(qrBase64)
+      ]);
+
+      // 3. Draw logo container circle
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(400, 180, 55, 0, Math.PI * 2);
+      ctx.strokeStyle = '#D4A437';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.closePath();
+
+      if (logoImg) {
+        ctx.beginPath();
+        ctx.arc(400, 180, 53, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.drawImage(logoImg, 347, 127, 106, 106);
+      } else {
+        // Draw elegant placeholder fallback letter
+        ctx.fillStyle = '#D4A437';
+        ctx.font = 'bold 45px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(restaurantName.charAt(0).toUpperCase() || 'R', 400, 180);
+      }
+      ctx.restore();
+
+      // 4. Draw Restaurant Name
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 44px Georgia, Garamond, serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(restaurantName, 400, 285);
+
+      // 5. Draw Gold Divider line
+      ctx.strokeStyle = 'rgba(212, 164, 55, 0.4)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(280, 315);
+      ctx.lineTo(520, 315);
+      ctx.stroke();
+
+      // 6. Draw Welcome Text
+      const welcomeTextVal = welcomeText || placeholders.welcome;
+      const instructionTextVal = instructionText || placeholders.instruction;
+      const thankYouTextVal = thankYouText || placeholders.thankYou;
+
+      ctx.fillStyle = '#E8C163';
+      ctx.font = 'italic 26px Georgia, serif';
+      ctx.textAlign = 'center';
+      
+      // Handle potential long welcome texts for counter template by splitting it or wrapping it
+      if (welcomeTextVal.length > 40) {
+        const words = welcomeTextVal.split(' ');
+        let line1 = '';
+        let line2 = '';
+        for (let i = 0; i < words.length; i++) {
+          if ((line1 + words[i]).length < 35) {
+            line1 += words[i] + ' ';
+          } else {
+            line2 += words[i] + ' ';
+          }
+        }
+        ctx.fillText(line1.trim(), 400, 360);
+        ctx.fillText(line2.trim(), 400, 395);
+      } else {
+        ctx.fillText(welcomeTextVal, 400, 375);
+      }
+
+      // 7. Draw QR Code Card (White Container)
+      ctx.save();
+      ctx.fillStyle = '#FFFFFF';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+      ctx.shadowBlur = 25;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 12;
+
+      // Rounded rectangle function
+      const drawRoundRect = (x: number, y: number, w: number, h: number, r: number) => {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+        ctx.fill();
+      };
+      drawRoundRect(220, 450, 360, 360, 24);
+      ctx.restore();
+
+      // Draw QR code inside white card
+      if (qrImg) {
+        ctx.drawImage(qrImg, 250, 480, 300, 300);
+      }
+
+      // 8. Draw Instruction Text
+      ctx.fillStyle = '#D4A437';
+      ctx.font = 'bold 30px Georgia, serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(instructionTextVal, 400, 890);
+
+      // Sub-instruction
+      ctx.fillStyle = '#9CA3AF';
+      ctx.font = '16px sans-serif';
+      ctx.fillText('No app download or registration required.', 400, 930);
+
+      // Gold Accent Divider
+      ctx.fillStyle = '#D4A437';
+      ctx.beginPath();
+      ctx.moveTo(395, 970);
+      ctx.lineTo(400, 965);
+      ctx.lineTo(405, 970);
+      ctx.lineTo(400, 975);
+      ctx.closePath();
+      ctx.fill();
+      
+      ctx.strokeStyle = 'rgba(212, 164, 55, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(250, 970);
+      ctx.lineTo(380, 970);
+      ctx.moveTo(420, 970);
+      ctx.lineTo(550, 970);
+      ctx.stroke();
+
+      // 9. Draw Thank You Text
+      ctx.fillStyle = '#9CA3AF';
+      ctx.font = 'italic 22px Georgia, serif';
+      ctx.fillText(thankYouTextVal, 400, 1040);
+
+      // 10. Trigger download
+      const dataUrl = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = `${restaurantName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-standee.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error('Error generating QR Standee Canvas:', err);
+      handleDownloadPNG();
+    }
   };
 
   const handlePrint = () => {
@@ -112,10 +333,10 @@ export default function QRCodePage() {
             </button>
 
             <button
-              onClick={handleDownloadPNG}
+              onClick={handleDownloadQR}
               className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-[#D4A437] to-[#B88E2F] hover:from-[#B88E2F] hover:to-[#A37B24] text-black text-sm font-bold shadow-[0_0_10px_rgba(212,164,55,0.15)] transition-all cursor-pointer"
             >
-              <Download className="w-4 h-4" /> Download PNG
+              <Download className="w-4 h-4" /> Download QR
             </button>
           </div>
         </div>
@@ -167,6 +388,49 @@ export default function QRCodePage() {
             </div>
           </div>
 
+          {/* Edit Template Text Fields */}
+          <div className="border-t border-gray-900 pt-6 space-y-4">
+            <h4 className="font-bold text-sm text-white">Customize Template Text</h4>
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-1">
+                  Welcome / Heading Text
+                </label>
+                <input
+                  type="text"
+                  value={welcomeText}
+                  onChange={(e) => setWelcomeText(e.target.value)}
+                  className="w-full bg-[#0d0d0d] border border-gray-800 focus:border-[#D4A437] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none"
+                  placeholder={placeholders.welcome}
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-1">
+                  Scan Instruction Text
+                </label>
+                <input
+                  type="text"
+                  value={instructionText}
+                  onChange={(e) => setInstructionText(e.target.value)}
+                  className="w-full bg-[#0d0d0d] border border-gray-800 focus:border-[#D4A437] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none"
+                  placeholder={placeholders.instruction}
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-1">
+                  Footer / Thank You Text
+                </label>
+                <input
+                  type="text"
+                  value={thankYouText}
+                  onChange={(e) => setThankYouText(e.target.value)}
+                  className="w-full bg-[#0d0d0d] border border-gray-800 focus:border-[#D4A437] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none"
+                  placeholder={placeholders.thankYou}
+                />
+              </div>
+            </div>
+          </div>
+
           <div className="border-t border-gray-900 pt-6">
             <button
               onClick={handlePrint}
@@ -195,11 +459,11 @@ export default function QRCodePage() {
                 <ChefHat className="w-8 h-8 text-[#D4A437] mb-2" />
               )}
               <h4 className="font-serif font-bold text-lg">{restaurantName}</h4>
-              <span className="text-[10px] font-serif italic text-gray-500">Fine Dining Menu</span>
+              <span className="text-[10px] font-serif italic text-gray-500">{welcomeText || placeholders.welcome}</span>
               <div className="w-28 h-28 my-3 flex items-center justify-center border border-gray-200 p-1">
                 {qrBase64 && <img src={qrBase64} alt="QR Code" className="w-full h-full" />}
               </div>
-              <p className="text-[10px] font-bold tracking-wider uppercase">Scan QR Code to Browse Menu</p>
+              <p className="text-[10px] font-bold tracking-wider uppercase">{instructionText || placeholders.instruction}</p>
             </div>
 
             {/* FOLD LINE */}
@@ -215,11 +479,11 @@ export default function QRCodePage() {
                 <ChefHat className="w-8 h-8 text-[#D4A437] mb-2" />
               )}
               <h4 className="font-serif font-bold text-lg">{restaurantName}</h4>
-              <span className="text-[10px] font-serif italic text-gray-500">Fine Dining Menu</span>
+              <span className="text-[10px] font-serif italic text-gray-500">{welcomeText || placeholders.welcome}</span>
               <div className="w-28 h-28 my-3 flex items-center justify-center border border-gray-200 p-1">
                 {qrBase64 && <img src={qrBase64} alt="QR Code" className="w-full h-full" />}
               </div>
-              <p className="text-[10px] font-bold tracking-wider uppercase">Scan QR Code to Browse Menu</p>
+              <p className="text-[10px] font-bold tracking-wider uppercase">{instructionText || placeholders.instruction}</p>
             </div>
           </div>
         )}
@@ -235,19 +499,19 @@ export default function QRCodePage() {
               )}
               <h3 className="font-serif font-bold text-2xl tracking-wide">{restaurantName}</h3>
               <div className="w-20 border-t border-[#D4A437] my-3" />
-              <p className="text-xs text-gray-500 tracking-widest uppercase font-semibold">Welcome to Our Table</p>
+              <p className="text-xs text-gray-500 tracking-widest uppercase font-semibold">{welcomeText || placeholders.welcome}</p>
             </div>
 
             <div className="my-8 flex flex-col items-center">
               <div className="p-3 bg-white border-2 border-gray-100 rounded-2xl shadow-md w-40 h-40 flex items-center justify-center">
                 {qrBase64 && <img src={qrBase64} alt="QR Code" className="w-full h-full object-contain" />}
               </div>
-              <p className="text-xs font-bold tracking-widest uppercase mt-6 text-[#D4A437] font-serif">Scan QR to View Menu</p>
+              <p className="text-xs font-bold tracking-widest uppercase mt-6 text-[#D4A437] font-serif">{instructionText || placeholders.instruction}</p>
               <p className="text-[10px] text-gray-400 mt-1 max-w-[200px]">No download or registration required.</p>
             </div>
 
             <div className="text-[10px] text-gray-500 italic">
-              Thank you for dining with us!
+              {thankYouText || placeholders.thankYou}
             </div>
           </div>
         )}
@@ -262,16 +526,16 @@ export default function QRCodePage() {
                 <ChefHat className="w-10 h-10 text-[#D4A437] mb-2" />
               )}
               <h3 className="font-serif font-bold text-2xl tracking-wide">{restaurantName}</h3>
-              <p className="text-sm text-gray-500 mt-2">Welcome! Scan the QR code to explore our gourmet menu offerings directly on your mobile device.</p>
+              <p className="text-sm text-gray-500 mt-2">{welcomeText || placeholders.welcome}</p>
               <div className="w-16 border-t border-[#D4A437] my-4" />
-              <span className="text-[10px] text-gray-400 italic">Digital Menu Viewer - No Cart Checkout Needed</span>
+              <span className="text-[10px] text-gray-400 italic">{thankYouText || placeholders.thankYou}</span>
             </div>
 
             <div className="flex flex-col items-center shrink-0">
               <div className="p-3 bg-white border border-gray-200 rounded-2xl shadow-md w-36 h-36 flex items-center justify-center">
                 {qrBase64 && <img src={qrBase64} alt="QR Code" className="w-full h-full object-contain" />}
               </div>
-              <span className="text-[10px] font-bold tracking-widest uppercase mt-4 text-[#D4A437] font-serif">Scan & Browse</span>
+              <span className="text-[10px] font-bold tracking-widest uppercase mt-4 text-[#D4A437] font-serif">{instructionText || placeholders.instruction}</span>
             </div>
           </div>
         )}

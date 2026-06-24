@@ -92,7 +92,7 @@ html, body {
   }
   
   /* Reset container styles for printing */
-  body, html, main, .flex, .flex-col {
+  body, html, main {
     background: white !important;
     color: black !important;
     height: auto !important;
@@ -119,10 +119,6 @@ html, body {
 
   .print-card {
     box-shadow: none !important;
-    border: 3px solid black !important;
     page-break-inside: avoid !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    height: auto !important;
   }
 }

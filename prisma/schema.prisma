@@ -52,6 +52,15 @@ model Restaurant {
   banner         String?        // URL to banner image
   theme          ThemeType      @default(LUXURY_DARK)
   currencySymbol String         @default("₹")
+  bannerTitle1   String?        @default("Good Food")
+  bannerTitle2   String?        @default("Great Mood")
+  bannerSubtitle String?        @default("Discover our chef's special selection just for you.")
+  badge1Title    String?        @default("Hygienic")
+  badge1Desc     String?        @default("Kitchen")
+  badge2Title    String?        @default("Fresh")
+  badge2Desc     String?        @default("Ingredients")
+  badge3Title    String?        @default("Chef")
+  badge3Desc     String?        @default("Specials")
   ownerId        String         @unique
   owner          User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   categories     Category[]

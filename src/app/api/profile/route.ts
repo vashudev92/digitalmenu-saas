@@ -65,6 +65,15 @@ export async function PUT(request: Request) {
       banner,
       theme,
       currencySymbol,
+      bannerTitle1,
+      bannerTitle2,
+      bannerSubtitle,
+      badge1Title,
+      badge1Desc,
+      badge2Title,
+      badge2Desc,
+      badge3Title,
+      badge3Desc,
       slug: proposedSlug,
     } = data;
 
@@ -123,6 +132,15 @@ export async function PUT(request: Request) {
           banner,
           theme,
           currencySymbol,
+          bannerTitle1,
+          bannerTitle2,
+          bannerSubtitle,
+          badge1Title,
+          badge1Desc,
+          badge2Title,
+          badge2Desc,
+          badge3Title,
+          badge3Desc,
         },
       });
 

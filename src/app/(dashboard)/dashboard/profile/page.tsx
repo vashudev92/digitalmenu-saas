@@ -29,6 +29,17 @@ export default function ProfilePage() {
   const [theme, setTheme] = useState<ThemeType>('LUXURY_DARK');
   const [currencySymbol, setCurrencySymbol] = useState('₹');
 
+  // Welcome page customizations
+  const [bannerTitle1, setBannerTitle1] = useState('');
+  const [bannerTitle2, setBannerTitle2] = useState('');
+  const [bannerSubtitle, setBannerSubtitle] = useState('');
+  const [badge1Title, setBadge1Title] = useState('');
+  const [badge1Desc, setBadge1Desc] = useState('');
+  const [badge2Title, setBadge2Title] = useState('');
+  const [badge2Desc, setBadge2Desc] = useState('');
+  const [badge3Title, setBadge3Title] = useState('');
+  const [badge3Desc, setBadge3Desc] = useState('');
+
   // Load Profile
   useEffect(() => {
     async function loadProfile() {
@@ -50,6 +61,17 @@ export default function ProfilePage() {
         setBanner(data.banner || '');
         setTheme(data.theme || 'LUXURY_DARK');
         setCurrencySymbol(data.currencySymbol || '₹');
+
+        // Customize Welcome Page content
+        setBannerTitle1(data.bannerTitle1 || '');
+        setBannerTitle2(data.bannerTitle2 || '');
+        setBannerSubtitle(data.bannerSubtitle || '');
+        setBadge1Title(data.badge1Title || '');
+        setBadge1Desc(data.badge1Desc || '');
+        setBadge2Title(data.badge2Title || '');
+        setBadge2Desc(data.badge2Desc || '');
+        setBadge3Title(data.badge3Title || '');
+        setBadge3Desc(data.badge3Desc || '');
       } catch (err) {
         setError('Could not load restaurant profile.');
       } finally {
@@ -86,6 +108,15 @@ export default function ProfilePage() {
           banner,
           theme,
           currencySymbol,
+          bannerTitle1,
+          bannerTitle2,
+          bannerSubtitle,
+          badge1Title,
+          badge1Desc,
+          badge2Title,
+          badge2Desc,
+          badge3Title,
+          badge3Desc,
         }),
       });
 
@@ -278,6 +309,116 @@ export default function ProfilePage() {
                 value={banner}
                 onChange={(base64) => setBanner(base64)}
               />
+            </div>
+          </div>
+        </div>
+
+        {/* Banner & Welcome Badges Customization */}
+        <div className="glass p-6 sm:p-8 rounded-3xl space-y-6">
+          <h3 className="text-lg font-bold border-b border-gray-900 pb-3">Banner & Welcome Badges</h3>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+                Banner Title Line 1
+              </label>
+              <input
+                type="text"
+                value={bannerTitle1}
+                onChange={(e) => setBannerTitle1(e.target.value)}
+                placeholder="Good Food"
+                className="w-full bg-[#0d0d0d] border border-gray-800 focus:border-[#D4A437] focus:ring-1 focus:ring-[#D4A437] rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+                Banner Title Line 2
+              </label>
+              <input
+                type="text"
+                value={bannerTitle2}
+                onChange={(e) => setBannerTitle2(e.target.value)}
+                placeholder="Great Mood"
+                className="w-full bg-[#0d0d0d] border border-gray-800 focus:border-[#D4A437] focus:ring-1 focus:ring-[#D4A437] rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none transition-all"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+              Banner Subtitle
+            </label>
+            <input
+              type="text"
+              value={bannerSubtitle}
+              onChange={(e) => setBannerSubtitle(e.target.value)}
+              placeholder="Discover our chef's special selection just for you."
+              className="w-full bg-[#0d0d0d] border border-gray-800 focus:border-[#D4A437] focus:ring-1 focus:ring-[#D4A437] rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none transition-all"
+            />
+          </div>
+
+          <div className="border-t border-gray-900 pt-6">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-4">
+              Welcome Badges (Shown under Banner)
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              {/* Badge 1 */}
+              <div className="space-y-3">
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Badge 1 (Header / Desc)</span>
+                <input
+                  type="text"
+                  value={badge1Title}
+                  onChange={(e) => setBadge1Title(e.target.value)}
+                  placeholder="Hygienic"
+                  className="w-full bg-[#0d0d0d] border border-gray-800 focus:border-[#D4A437] focus:ring-1 focus:ring-[#D4A437] rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none transition-all"
+                />
+                <input
+                  type="text"
+                  value={badge1Desc}
+                  onChange={(e) => setBadge1Desc(e.target.value)}
+                  placeholder="Kitchen"
+                  className="w-full bg-[#0d0d0d] border border-gray-800 focus:border-[#D4A437] focus:ring-1 focus:ring-[#D4A437] rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none transition-all"
+                />
+              </div>
+
+              {/* Badge 2 */}
+              <div className="space-y-3">
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Badge 2 (Header / Desc)</span>
+                <input
+                  type="text"
+                  value={badge2Title}
+                  onChange={(e) => setBadge2Title(e.target.value)}
+                  placeholder="Fresh"
+                  className="w-full bg-[#0d0d0d] border border-gray-800 focus:border-[#D4A437] focus:ring-1 focus:ring-[#D4A437] rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none transition-all"
+                />
+                <input
+                  type="text"
+                  value={badge2Desc}
+                  onChange={(e) => setBadge2Desc(e.target.value)}
+                  placeholder="Ingredients"
+                  className="w-full bg-[#0d0d0d] border border-gray-800 focus:border-[#D4A437] focus:ring-1 focus:ring-[#D4A437] rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none transition-all"
+                />
+              </div>
+
+              {/* Badge 3 */}
+              <div className="space-y-3">
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Badge 3 (Header / Desc)</span>
+                <input
+                  type="text"
+                  value={badge3Title}
+                  onChange={(e) => setBadge3Title(e.target.value)}
+                  placeholder="Chef"
+                  className="w-full bg-[#0d0d0d] border border-gray-800 focus:border-[#D4A437] focus:ring-1 focus:ring-[#D4A437] rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none transition-all"
+                />
+                <input
+                  type="text"
+                  value={badge3Desc}
+                  onChange={(e) => setBadge3Desc(e.target.value)}
+                  placeholder="Specials"
+                  className="w-full bg-[#0d0d0d] border border-gray-800 focus:border-[#D4A437] focus:ring-1 focus:ring-[#D4A437] rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none transition-all"
+                />
+              </div>
             </div>
           </div>
         </div>

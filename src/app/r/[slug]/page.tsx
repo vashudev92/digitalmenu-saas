@@ -112,23 +112,19 @@ export default async function RestaurantWelcomePage({ params }: Props) {
       
       <div>
         {/* Header Bar */}
-        <header className="px-5 py-4 flex items-center justify-between z-10 sticky top-0 bg-inherit">
-          <Link href="/" className="p-1 rounded-xl bg-gray-500/5 hover:bg-gray-500/10 border border-gray-500/10 text-gray-400 hover:text-white transition-colors">
-            <ChevronLeft className="w-5 h-5" />
-          </Link>
+        <header className="px-5 py-4 flex flex-col items-center justify-center z-10 sticky top-0 bg-inherit border-b border-gray-500/5">
           <div className="flex flex-col items-center">
             {restaurant.logo ? (
-              <img src={restaurant.logo} alt="Logo" className="w-6 h-6 rounded-full object-cover mb-1 border border-gray-800" />
+              <img src={restaurant.logo} alt="Logo" className="w-8 h-8 rounded-full object-cover mb-1 border border-gray-800" />
             ) : (
-              <ChefHat className={`w-5 h-5 ${style.accentColor} mb-0.5`} />
+              <ChefHat className={`w-6 h-6 ${style.accentColor} mb-0.5`} />
             )}
             <span className="font-serif font-bold text-sm tracking-wide uppercase">{restaurant.name}</span>
           </div>
-          <div className="w-10"></div>
         </header>
 
         {/* Hero Section */}
-        <div className="px-4 mt-2">
+        <div className="px-4 mt-4">
           <div className="relative rounded-3xl overflow-hidden h-[300px] bg-gray-950 border border-gray-900 shadow-md">
             {restaurant.banner ? (
               <img src={restaurant.banner} alt="Food Cover" className="w-full h-full object-cover" />
@@ -139,11 +135,11 @@ export default async function RestaurantWelcomePage({ params }: Props) {
             {/* Soft dark text overlay gradient */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-black/10 flex flex-col justify-end p-6">
               <h2 className="font-serif text-white text-3xl font-bold leading-tight tracking-tight">
-                Good Food<br />
-                <span className="text-[#D4A437]">Great Mood</span>
+                {restaurant.bannerTitle1 || 'Good Food'}<br />
+                <span className="text-[#D4A437]">{restaurant.bannerTitle2 || 'Great Mood'}</span>
               </h2>
               <p className="text-gray-400 text-xs mt-2 font-medium max-w-xs">
-                Discover our chef's special selection just for you.
+                {restaurant.bannerSubtitle || "Discover our chef's special selection just for you."}
               </p>
               <div className="w-10 border-t-2 border-[#D4A437] mt-3" />
             </div>
@@ -154,20 +150,20 @@ export default async function RestaurantWelcomePage({ params }: Props) {
         <div className="grid grid-cols-3 gap-3 px-4 mt-5">
           <div className={`p-3.5 rounded-2xl border text-center flex flex-col items-center justify-center ${style.cardBg}`}>
             <ShieldCheck className={`w-5 h-5 mb-1.5 ${style.accentColor}`} />
-            <span className="text-[10px] font-bold tracking-wider uppercase leading-none">Hygienic</span>
-            <span className="text-[9px] text-gray-500 mt-1 uppercase font-semibold">Kitchen</span>
+            <span className="text-[10px] font-bold tracking-wider uppercase leading-none">{restaurant.badge1Title || 'Hygienic'}</span>
+            <span className="text-[9px] text-gray-500 mt-1 uppercase font-semibold">{restaurant.badge1Desc || 'Kitchen'}</span>
           </div>
           
           <div className={`p-3.5 rounded-2xl border text-center flex flex-col items-center justify-center ${style.cardBg}`}>
             <Flame className={`w-5 h-5 mb-1.5 ${style.accentColor}`} />
-            <span className="text-[10px] font-bold tracking-wider uppercase leading-none">Fresh</span>
-            <span className="text-[9px] text-gray-500 mt-1 uppercase font-semibold">Ingredients</span>
+            <span className="text-[10px] font-bold tracking-wider uppercase leading-none">{restaurant.badge2Title || 'Fresh'}</span>
+            <span className="text-[9px] text-gray-500 mt-1 uppercase font-semibold">{restaurant.badge2Desc || 'Ingredients'}</span>
           </div>
 
           <div className={`p-3.5 rounded-2xl border text-center flex flex-col items-center justify-center ${style.cardBg}`}>
             <Sparkles className={`w-5 h-5 mb-1.5 ${style.accentColor}`} />
-            <span className="text-[10px] font-bold tracking-wider uppercase leading-none">Chef</span>
-            <span className="text-[9px] text-gray-500 mt-1 uppercase font-semibold">Specials</span>
+            <span className="text-[10px] font-bold tracking-wider uppercase leading-none">{restaurant.badge3Title || 'Chef'}</span>
+            <span className="text-[9px] text-gray-500 mt-1 uppercase font-semibold">{restaurant.badge3Desc || 'Specials'}</span>
           </div>
         </div>
 
@@ -193,7 +189,7 @@ export default async function RestaurantWelcomePage({ params }: Props) {
               </div>
               <div className="overflow-hidden">
                 <div className="flex items-center gap-2">
-                  <h4 className="font-bold text-sm text-white truncate">{todaySpecial.name}</h4>
+                  <h4 className="font-bold text-sm truncate">{todaySpecial.name}</h4>
                   <span className={`w-3 h-3 border flex items-center justify-center rounded shrink-0 ${todaySpecial.isVeg ? 'border-green-600' : 'border-red-600'}`}>
                     <span className={`w-1 h-1 rounded-full ${todaySpecial.isVeg ? 'bg-green-600' : 'bg-red-600'}`} />
                   </span>

@@ -84,6 +84,10 @@ export default async function RestaurantMenuPage({ params }: Props) {
         isFeatured: item.isFeatured,
         categoryId: item.categoryId,
       }))}
+      address={restaurant.address}
+      phone={restaurant.phone}
+      website={restaurant.website}
+      googleMapsUrl={restaurant.googleMapsUrl}
     />
   );
 }

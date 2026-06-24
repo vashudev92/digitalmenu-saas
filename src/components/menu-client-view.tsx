@@ -50,6 +50,10 @@ interface Props {
   currencySymbol?: string;
   categories: CategoryOption[];
   menuItems: MenuItemOption[];
+  address?: string | null;
+  phone?: string | null;
+  website?: string | null;
+  googleMapsUrl?: string | null;
 }
 
 const iconMap: { [key: string]: React.ReactNode } = {
@@ -71,6 +75,10 @@ export default function MenuClientView({
   currencySymbol = '₹',
   categories,
   menuItems,
+  address,
+  phone,
+  website,
+  googleMapsUrl,
 }: Props) {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('ALL');
@@ -163,7 +171,7 @@ export default function MenuClientView({
           <div className="px-4 pt-4 pb-3 flex items-center justify-between">
             <Link
               href={`/r/${restaurantSlug}`}
-              className={`p-1.5 rounded-xl bg-gray-500/5 hover:bg-gray-500/10 border ${style.divider} text-gray-400 hover:text-white transition-all`}
+              className={`p-1.5 rounded-xl bg-gray-500/5 hover:bg-gray-500/10 border ${style.divider} text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white transition-all`}
             >
               <ChevronLeft className="w-5 h-5" />
             </Link>
@@ -191,7 +199,7 @@ export default function MenuClientView({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search dishes..."
-                className={`w-full rounded-xl pl-10 pr-4 py-3 text-xs text-white focus:outline-none transition-all ${style.inputBg} border`}
+                className={`w-full rounded-xl pl-10 pr-4 py-3 text-xs focus:outline-none transition-all ${style.inputBg} ${style.text} border`}
               />
             </div>
           </div>
@@ -208,7 +216,7 @@ export default function MenuClientView({
                     : style.catInactive
                 }`}
               >
-                <Star className={`w-4 h-4 shrink-0 ${activeCategory === 'ALL' ? 'text-black fill-current' : style.accentText}`} />
+                <Star className={`w-4 h-4 shrink-0 ${activeCategory === 'ALL' ? 'fill-current' : style.accentText}`} />
                 <span>All Menu</span>
               </button>
 
@@ -225,7 +233,7 @@ export default function MenuClientView({
                         : style.catInactive
                     }`}
                   >
-                    <span className={`shrink-0 ${isCatActive ? 'text-black' : style.accentText}`}>
+                    <span className={`shrink-0 ${isCatActive ? '' : style.accentText}`}>
                       {iconMap[cat.icon] || <Utensils className="w-4 h-4" />}
                     </span>
                     <span>{cat.name}</span>
@@ -247,7 +255,7 @@ export default function MenuClientView({
             onClick={() => setVegOnly(!vegOnly)}
             className="flex items-center gap-2 cursor-pointer select-none border-none bg-transparent p-0 focus:outline-none [touch-action:manipulation]"
           >
-            <span className="text-xs font-semibold text-gray-300">Veg Only</span>
+            <span className={`text-xs font-semibold ${style.text}`}>Veg Only</span>
             <span className="relative inline-block w-9 h-5">
               <span className={`block w-9 h-5 bg-gray-800 rounded-full transition-all relative ${vegOnly ? 'bg-green-600' : ''}`}>
                 <span className={`absolute top-[2px] left-[2px] bg-white rounded-full h-4 w-4 transition-all block ${
@@ -269,8 +277,8 @@ export default function MenuClientView({
               return (
                 <div key={cat.id} className="space-y-4">
                   {/* Category Title Divider */}
-                  <div className="flex items-center justify-between border-b border-gray-900 pb-2">
-                    <h3 className="font-serif text-lg font-bold tracking-wide text-white">
+                  <div className={`flex items-center justify-between border-b ${style.divider} pb-2`}>
+                    <h3 className="font-serif text-lg font-bold tracking-wide">
                       {cat.name} <span className={`text-xs ml-1 font-serif italic ${style.muted}`}>• {itemsInCat.length} items</span>
                     </h3>
                     <span className={`text-[10px] uppercase font-bold tracking-widest hover:underline cursor-pointer ${style.accentText}`}>
@@ -297,7 +305,7 @@ export default function MenuClientView({
                           
                           <div className="overflow-hidden">
                             <div className="flex items-center gap-2">
-                              <h4 className="font-bold text-sm text-white truncate leading-tight">{item.name}</h4>
+                              <h4 className="font-bold text-sm truncate leading-tight">{item.name}</h4>
                               <span className={`w-3.5 h-3.5 border flex items-center justify-center rounded shrink-0 ${
                                 item.isVeg ? 'border-green-600' : 'border-red-600'
                               }`}>
@@ -344,7 +352,7 @@ export default function MenuClientView({
       <nav className={`fixed bottom-0 left-0 right-0 mx-auto w-full max-w-[500px] z-40 backdrop-blur-md border-t px-6 py-4 flex items-center justify-between ${style.navBg}`}>
         <Link
           href={`/r/${restaurantSlug}`}
-          className="flex flex-col items-center gap-1 text-gray-400 hover:text-white transition-colors [touch-action:manipulation]"
+          className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white transition-colors [touch-action:manipulation]"
         >
           <Home className="w-5 h-5" />
           <span className="text-[9px] uppercase font-bold tracking-wider">Home</span>
@@ -361,7 +369,7 @@ export default function MenuClientView({
         <button
           type="button"
           onClick={() => setIsInfoOpen(true)}
-          className="flex flex-col items-center gap-1 text-gray-400 hover:text-white transition-colors cursor-pointer [touch-action:manipulation]"
+          className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white transition-colors cursor-pointer [touch-action:manipulation]"
         >
           <Info className="w-5 h-5" />
           <span className="text-[9px] uppercase font-bold tracking-wider">Info</span>
@@ -392,24 +400,42 @@ export default function MenuClientView({
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 text-gray-300">
-                <MapPin className="w-5 h-5 text-[#D4A437] shrink-0 mt-0.5" />
-                <p className="text-xs leading-relaxed">
-                  123 Golden Avenue, Gourmet District, NY 10001
+              {address && (
+                <div className="flex items-start gap-3 text-gray-300">
+                  <MapPin className="w-5 h-5 text-[#D4A437] shrink-0 mt-0.5" />
+                  {googleMapsUrl ? (
+                    <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer" className="text-xs leading-relaxed hover:underline text-gray-300">
+                      {address}
+                    </a>
+                  ) : (
+                    <p className="text-xs leading-relaxed">
+                      {address}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {phone && (
+                <div className="flex items-center gap-3 text-gray-300">
+                  <Phone className="w-5 h-5 text-[#D4A437] shrink-0" />
+                  <a href={`tel:${phone}`} className="text-xs hover:underline text-gray-300">{phone}</a>
+                </div>
+              )}
+
+              {website && (
+                <div className="flex items-center gap-3 text-gray-300">
+                  <Globe className="w-5 h-5 text-[#D4A437] shrink-0" />
+                  <a href={website.startsWith('http') ? website : `https://${website}`} target="_blank" rel="noopener noreferrer" className="text-xs text-[#D4A437] hover:underline">
+                    {website.replace(/https?:\/\/(www\.)?/, '')}
+                  </a>
+                </div>
+              )}
+
+              {!address && !phone && !website && (
+                <p className="text-xs text-gray-400 text-center py-4">
+                  Contact details are not available.
                 </p>
-              </div>
-
-              <div className="flex items-center gap-3 text-gray-300">
-                <Phone className="w-5 h-5 text-[#D4A437] shrink-0" />
-                <span className="text-xs">+1 (555) 123-4567</span>
-              </div>
-
-              <div className="flex items-center gap-3 text-gray-300">
-                <Globe className="w-5 h-5 text-[#D4A437] shrink-0" />
-                <a href="https://trattoriabella.com" target="_blank" className="text-xs text-[#D4A437] hover:underline">
-                  Visit Website
-                </a>
-              </div>
+              )}
             </div>
 
             <button
