@@ -41,10 +41,17 @@ export async function POST(request: Request) {
 
     const filename = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${extension}`;
 
-    // 5. Check if running in production with Vercel Blob configuration
-    const isProdBlob = !!process.env.BLOB_READ_WRITE_TOKEN;
+    // 5. Check if running in production on Vercel
+    const isVercel = process.env.VERCEL === '1';
+    const hasToken = !!process.env.BLOB_READ_WRITE_TOKEN;
 
-    if (isProdBlob) {
+    if (isVercel && !hasToken) {
+      return NextResponse.json({ 
+        error: 'Vercel Blob store token is missing. Please connect Vercel Blob in your project storage settings and redeploy the app.' 
+      }, { status: 400 });
+    }
+
+    if (hasToken) {
       // Production: Upload to Vercel Blob cloud folder
       console.log('[API/Upload] Uploading to Vercel Blob:', filename);
       const blob = await put(filename, buffer, {
