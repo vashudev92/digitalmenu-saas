@@ -1,0 +1,129 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  OWNER
+}
+
+enum ThemeType {
+  LUXURY_DARK
+  ELEGANT_LIGHT
+  CAFE_THEME
+  MODERN_THEME
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIAL
+  EXPIRED
+  CANCELLED
+}
+
+model User {
+  id            String      @id @default(uuid())
+  email         String      @unique
+  passwordHash  String
+  name          String
+  role          Role        @default(OWNER)
+  restaurant    Restaurant?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model Restaurant {
+  id             String         @id @default(uuid())
+  name           String
+  slug           String         @unique
+  tagline        String?
+  description    String?
+  address        String?
+  phone          String?
+  whatsApp       String?
+  website        String?
+  googleMapsUrl  String?
+  logo           String?        // URL to logo
+  banner         String?        // URL to banner image
+  theme          ThemeType      @default(LUXURY_DARK)
+  currencySymbol String         @default("₹")
+  ownerId        String         @unique
+  owner          User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  categories     Category[]
+  menuItems      MenuItem[]
+  qrCode         QRCode?
+  subscription   Subscription?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model Category {
+  id           String      @id @default(uuid())
+  name         String
+  icon         String      @default("Utensils") // Lucide icon name
+  sortOrder    Int         @default(0)
+  status       Boolean     @default(true) // Active/Inactive
+  restaurantId String
+  restaurant   Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  menuItems    MenuItem[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@unique([restaurantId, name])
+}
+
+model MenuItem {
+  id           String      @id @default(uuid())
+  name         String
+  description  String?
+  price        Float
+  image        String?     // URL to dish image
+  isVeg        Boolean     @default(true)
+  isFeatured   Boolean     @default(false)
+  isAvailable  Boolean     @default(true)
+  categoryId   String
+  category     Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  restaurantId String
+  restaurant   Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model QRCode {
+  id           String      @id @default(uuid())
+  url          String      // e.g. scanplate.com/r/slug
+  dataUrl      String      @db.Text // Base64 image
+  restaurantId String      @unique
+  restaurant   Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model Plan {
+  id            String         @id @default(uuid())
+  name          String         @unique // e.g. Free, Premium, Luxury
+  price         Float
+  description   String?
+  features      String[]       // List of features
+  subscriptions Subscription[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Subscription {
+  id           String             @id @default(uuid())
+  status       SubscriptionStatus @default(TRIAL)
+  restaurantId String             @unique
+  restaurant   Restaurant         @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  planId       String
+  plan         Plan               @relation(fields: [planId], references: [id])
+  startDate    DateTime           @default(now())
+  endDate      DateTime
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime       @updatedAt
+}

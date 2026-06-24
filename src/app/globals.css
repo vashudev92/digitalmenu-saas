@@ -1,0 +1,128 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-inter), sans-serif;
+  --font-serif: var(--font-playfair), serif;
+  
+  --color-primary: #D4A437;
+  --color-gold: #D4A437;
+  --color-gold-hover: #B88E2F;
+  --color-gold-muted: rgba(212, 164, 55, 0.2);
+  --color-luxury-black: #0A0A0A;
+  --color-luxury-card: #121212;
+  --color-luxury-border: rgba(212, 164, 55, 0.15);
+}
+
+:root {
+  --background: #0A0A0A;
+  --foreground: #FFFFFF;
+}
+
+html, body {
+  background-color: var(--background);
+  color: var(--foreground);
+  width: 100%;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+/* Glassmorphism helpers */
+.glass {
+  background: rgba(18, 18, 18, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(212, 164, 55, 0.15);
+}
+
+.glass-gold {
+  background: linear-gradient(135deg, rgba(212, 164, 55, 0.08) 0%, rgba(18, 18, 18, 0.8) 100%);
+  border: 1px solid rgba(212, 164, 55, 0.25);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.gold-gradient-text {
+  background: linear-gradient(135deg, #FFFFFF 0%, #E8C163 50%, #D4A437 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gold-border-glow {
+  box-shadow: 0 0 15px rgba(212, 164, 55, 0.15);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gold-border-glow:hover {
+  box-shadow: 0 0 25px rgba(212, 164, 55, 0.3);
+  border-color: rgba(212, 164, 55, 0.5);
+}
+
+/* Custom Scrollbar for Luxury Aesthetics */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0A0A0A;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1C1C1E;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #D4A437;
+}
+
+/* Hide scrollbars for categories container */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Print utilities for QR templates */
+@media print {
+  /* Hide dashboard navigation and non-printable elements */
+  aside, header, .no-print, button {
+    display: none !important;
+  }
+  
+  /* Reset container styles for printing */
+  body, html, main, .flex, .flex-col {
+    background: white !important;
+    color: black !important;
+    height: auto !important;
+    overflow: visible !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+  }
+  
+  /* Focus solely on the print-preview block */
+  .print-layout {
+    border: none !important;
+    background: white !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    box-shadow: none !important;
+  }
+
+  .print-card {
+    box-shadow: none !important;
+    border: 3px solid black !important;
+    page-break-inside: avoid !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+  }
+}
