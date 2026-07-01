@@ -32,7 +32,7 @@ export async function GET() {
           },
         },
         qrCode: {
-          select: { id: true, url: true },
+          select: { id: true, url: true, dataUrl: true },
         },
       },
       orderBy: { createdAt: 'asc' },
