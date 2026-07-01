@@ -1,11 +1,10 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
-import { useState, useEffect } from 'react';
-import { Store, Link as LinkIcon, Phone, MapPin, Globe, Loader2, Save, FileText, CheckCircle, Image } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Store, Link as LinkIcon, Phone, MapPin, Globe, Loader2, Save, FileText, CheckCircle, Image, Palette, Type, Pipette } from 'lucide-react';
 import ImageCropper from '@/components/image-cropper';
-
-type ThemeType = 'LUXURY_DARK' | 'ELEGANT_LIGHT' | 'CAFE_THEME' | 'MODERN_THEME';
+import { THEME_LIST, FONT_OPTIONS, COLOR_PRESETS } from '@/lib/theme-config';
 
 export default function ProfilePage() {
   const { update: updateSession } = useSession();
@@ -26,8 +25,18 @@ export default function ProfilePage() {
   const [googleMapsUrl, setGoogleMapsUrl] = useState('');
   const [logo, setLogo] = useState('');
   const [banner, setBanner] = useState('');
-  const [theme, setTheme] = useState<ThemeType>('LUXURY_DARK');
+  const [favicon, setFavicon] = useState('');
+  const [theme, setTheme] = useState<string>('LUXURY_DARK');
   const [currencySymbol, setCurrencySymbol] = useState('₹');
+
+  // Typography states
+  const [fontHeading, setFontHeading] = useState('Playfair Display');
+  const [fontBody, setFontBody] = useState('Inter');
+
+  // Custom brand color states
+  const [primaryColor, setPrimaryColor] = useState('#D4A437');
+  const [secondaryColor, setSecondaryColor] = useState('#B88E2F');
+  const [accentColor, setAccentColor] = useState('#F5D76E');
 
   // Welcome page customizations
   const [bannerTitle1, setBannerTitle1] = useState('');
@@ -39,6 +48,27 @@ export default function ProfilePage() {
   const [badge2Desc, setBadge2Desc] = useState('');
   const [badge3Title, setBadge3Title] = useState('');
   const [badge3Desc, setBadge3Desc] = useState('');
+
+  // Load Google Fonts dynamically for preview
+  const loadGoogleFont = useCallback((family: string) => {
+    const fontOption = FONT_OPTIONS.find((f) => f.family === family);
+    if (!fontOption) return;
+    const linkId = `gfont-${family.replace(/\s+/g, '-').toLowerCase()}`;
+    if (document.getElementById(linkId)) return;
+    const link = document.createElement('link');
+    link.id = linkId;
+    link.rel = 'stylesheet';
+    link.href = `https://fonts.googleapis.com/css2?family=${fontOption.googleParam}&display=swap`;
+    document.head.appendChild(link);
+  }, []);
+
+  useEffect(() => {
+    loadGoogleFont(fontHeading);
+  }, [fontHeading, loadGoogleFont]);
+
+  useEffect(() => {
+    loadGoogleFont(fontBody);
+  }, [fontBody, loadGoogleFont]);
 
   // Load Profile
   useEffect(() => {
@@ -59,8 +89,18 @@ export default function ProfilePage() {
         setGoogleMapsUrl(data.googleMapsUrl || '');
         setLogo(data.logo || '');
         setBanner(data.banner || '');
+        setFavicon(data.favicon || '');
         setTheme(data.theme || 'LUXURY_DARK');
         setCurrencySymbol(data.currencySymbol || '₹');
+
+        // Typography
+        setFontHeading(data.fontHeading || 'Playfair Display');
+        setFontBody(data.fontBody || 'Inter');
+
+        // Custom brand colors
+        setPrimaryColor(data.primaryColor || '#D4A437');
+        setSecondaryColor(data.secondaryColor || '#B88E2F');
+        setAccentColor(data.accentColor || '#F5D76E');
 
         // Customize Welcome Page content
         setBannerTitle1(data.bannerTitle1 || '');
@@ -106,8 +146,14 @@ export default function ProfilePage() {
           googleMapsUrl,
           logo,
           banner,
+          favicon,
           theme,
           currencySymbol,
+          fontHeading,
+          fontBody,
+          primaryColor,
+          secondaryColor,
+          accentColor,
           bannerTitle1,
           bannerTitle2,
           bannerSubtitle,
@@ -142,41 +188,6 @@ export default function ProfilePage() {
       setSaving(false);
     }
   };
-
-  const themesList = [
-    {
-      id: 'LUXURY_DARK' as ThemeType,
-      name: 'Luxury Dark',
-      bg: 'bg-[#0A0A0A]',
-      accent: 'border-[#D4A437]',
-      text: 'text-white',
-      desc: 'Elegant gold highlights on deep black'
-    },
-    {
-      id: 'ELEGANT_LIGHT' as ThemeType,
-      name: 'Elegant Light',
-      bg: 'bg-[#F7F3EE]',
-      accent: 'border-[#D4A24C]',
-      text: 'text-[#1F1F1F]',
-      desc: 'Chic cream theme with premium brown text'
-    },
-    {
-      id: 'CAFE_THEME' as ThemeType,
-      name: 'Cafe Theme',
-      bg: 'bg-[#1E1610]',
-      accent: 'border-[#A07855]',
-      text: 'text-[#F5F2EB]',
-      desc: 'Warm espresso background with latte colors'
-    },
-    {
-      id: 'MODERN_THEME' as ThemeType,
-      name: 'Modern Theme',
-      bg: 'bg-zinc-950',
-      accent: 'border-white',
-      text: 'text-white',
-      desc: 'Minimalist high-contrast layout'
-    }
-  ];
 
   if (loading) {
     return (
@@ -311,6 +322,17 @@ export default function ProfilePage() {
               />
             </div>
           </div>
+
+          <div className="border-t border-gray-900 pt-6">
+            <div className="max-w-xs">
+              <ImageCropper
+                label="Favicon (Browser Tab Icon)"
+                aspectRatio="square"
+                value={favicon}
+                onChange={(base64) => setFavicon(base64)}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Banner & Welcome Badges Customization */}
@@ -423,35 +445,284 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Theme Selector */}
+        {/* Theme Selector — 12 Themes */}
         <div className="glass p-6 sm:p-8 rounded-3xl space-y-6">
-          <h3 className="text-lg font-bold border-b border-gray-900 pb-3">Theme Selection</h3>
+          <h3 className="text-lg font-bold border-b border-gray-900 pb-3 flex items-center gap-2">
+            <Palette className="w-5 h-5 text-[#D4A437]" /> Theme Selection
+          </h3>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {themesList.map((t) => {
-              const isSelected = theme === t.id;
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {THEME_LIST.map((t) => {
+              const isSelected = theme === t.key;
               return (
                 <div
-                  key={t.id}
-                  onClick={() => setTheme(t.id)}
-                  className={`p-5 rounded-2xl cursor-pointer border-2 transition-all flex flex-col justify-between h-32 ${t.bg} ${
+                  key={t.key}
+                  onClick={() => setTheme(t.key)}
+                  className={`relative p-4 rounded-2xl cursor-pointer border-2 transition-all group ${
                     isSelected
-                      ? `${t.accent} shadow-[0_0_15px_rgba(212,164,55,0.15)]`
-                      : 'border-transparent hover:border-gray-800 opacity-60 hover:opacity-90'
+                      ? 'border-[#D4A437] shadow-[0_0_20px_rgba(212,164,55,0.15)]'
+                      : 'border-transparent hover:border-gray-700 opacity-65 hover:opacity-100'
                   }`}
+                  style={{ backgroundColor: t.previewBg }}
                 >
-                  <div className="flex justify-between items-center">
-                    <span className={`font-serif font-bold text-lg ${t.text}`}>{t.name}</span>
-                    {isSelected && (
-                      <div className="w-5 h-5 rounded-full bg-[#D4A437] flex items-center justify-center">
-                        <CheckCircle className="w-3.5 h-3.5 text-black" />
-                      </div>
-                    )}
+                  {/* Selected indicator */}
+                  {isSelected && (
+                    <div className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full bg-[#D4A437] flex items-center justify-center">
+                      <CheckCircle className="w-3.5 h-3.5 text-black" />
+                    </div>
+                  )}
+
+                  {/* Theme name */}
+                  <span
+                    className="block font-serif font-bold text-sm mb-1"
+                    style={{ color: t.previewText }}
+                  >
+                    {t.name}
+                  </span>
+
+                  {/* Description */}
+                  <span className="block text-[10px] leading-tight mb-3 opacity-60" style={{ color: t.previewText }}>
+                    {t.description}
+                  </span>
+
+                  {/* Live preview bars */}
+                  <div className="flex gap-1.5">
+                    <div
+                      className="h-2 flex-[3] rounded-full"
+                      style={{ backgroundColor: t.previewAccent }}
+                    />
+                    <div
+                      className="h-2 flex-[2] rounded-full opacity-40"
+                      style={{ backgroundColor: t.previewText }}
+                    />
+                    <div
+                      className="h-2 flex-[1] rounded-full opacity-25"
+                      style={{ backgroundColor: t.previewAccent }}
+                    />
                   </div>
-                  <span className="text-xs text-gray-500">{t.desc}</span>
                 </div>
               );
             })}
+          </div>
+        </div>
+
+        {/* Typography */}
+        <div className="glass p-6 sm:p-8 rounded-3xl space-y-6">
+          <h3 className="text-lg font-bold border-b border-gray-900 pb-3 flex items-center gap-2">
+            <Type className="w-5 h-5 text-[#D4A437]" /> Typography
+          </h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+                Heading Font
+              </label>
+              <select
+                value={fontHeading}
+                onChange={(e) => setFontHeading(e.target.value)}
+                className="w-full bg-[#0d0d0d] border border-gray-800 focus:border-[#D4A437] focus:ring-1 focus:ring-[#D4A437] rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none transition-all"
+              >
+                {FONT_OPTIONS.map((f) => (
+                  <option key={f.family} value={f.family}>
+                    {f.family} — {f.description}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+                Body Font
+              </label>
+              <select
+                value={fontBody}
+                onChange={(e) => setFontBody(e.target.value)}
+                className="w-full bg-[#0d0d0d] border border-gray-800 focus:border-[#D4A437] focus:ring-1 focus:ring-[#D4A437] rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none transition-all"
+              >
+                {FONT_OPTIONS.map((f) => (
+                  <option key={f.family} value={f.family}>
+                    {f.family} — {f.description}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Live Font Preview */}
+          <div className="bg-[#0d0d0d] border border-gray-800 rounded-2xl p-6 space-y-3">
+            <span className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-3">Live Preview</span>
+            <h4
+              className="text-2xl font-bold text-white"
+              style={{ fontFamily: `'${fontHeading}', serif` }}
+            >
+              The Grand Menu
+            </h4>
+            <p
+              className="text-sm text-gray-300 leading-relaxed"
+              style={{ fontFamily: `'${fontBody}', sans-serif` }}
+            >
+              Explore our carefully curated selection of dishes, crafted with the finest ingredients
+              and presented with artisanal elegance. Each plate tells a story of culinary mastery.
+            </p>
+            <div className="flex gap-4 pt-1">
+              <span
+                className="text-lg font-semibold text-[#D4A437]"
+                style={{ fontFamily: `'${fontHeading}', serif` }}
+              >
+                ₹1,250
+              </span>
+              <span
+                className="text-sm text-gray-400 self-end"
+                style={{ fontFamily: `'${fontBody}', sans-serif` }}
+              >
+                Truffle Risotto
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Custom Brand Colors */}
+        <div className="glass p-6 sm:p-8 rounded-3xl space-y-6">
+          <h3 className="text-lg font-bold border-b border-gray-900 pb-3 flex items-center gap-2">
+            <Pipette className="w-5 h-5 text-[#D4A437]" /> Custom Brand Colors
+          </h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {/* Primary Color */}
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+                Primary Color
+              </label>
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <input
+                    type="color"
+                    value={primaryColor}
+                    onChange={(e) => setPrimaryColor(e.target.value)}
+                    className="w-12 h-12 rounded-xl border-2 border-gray-800 cursor-pointer bg-transparent [&::-webkit-color-swatch-wrapper]:p-0.5 [&::-webkit-color-swatch]:rounded-lg [&::-webkit-color-swatch]:border-none"
+                  />
+                </div>
+                <input
+                  type="text"
+                  value={primaryColor}
+                  onChange={(e) => setPrimaryColor(e.target.value)}
+                  placeholder="#D4A437"
+                  className="flex-1 bg-[#0d0d0d] border border-gray-800 focus:border-[#D4A437] focus:ring-1 focus:ring-[#D4A437] rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none transition-all font-mono"
+                />
+              </div>
+            </div>
+
+            {/* Secondary Color */}
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+                Secondary Color
+              </label>
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <input
+                    type="color"
+                    value={secondaryColor}
+                    onChange={(e) => setSecondaryColor(e.target.value)}
+                    className="w-12 h-12 rounded-xl border-2 border-gray-800 cursor-pointer bg-transparent [&::-webkit-color-swatch-wrapper]:p-0.5 [&::-webkit-color-swatch]:rounded-lg [&::-webkit-color-swatch]:border-none"
+                  />
+                </div>
+                <input
+                  type="text"
+                  value={secondaryColor}
+                  onChange={(e) => setSecondaryColor(e.target.value)}
+                  placeholder="#B88E2F"
+                  className="flex-1 bg-[#0d0d0d] border border-gray-800 focus:border-[#D4A437] focus:ring-1 focus:ring-[#D4A437] rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none transition-all font-mono"
+                />
+              </div>
+            </div>
+
+            {/* Accent Color */}
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+                Accent Color
+              </label>
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <input
+                    type="color"
+                    value={accentColor}
+                    onChange={(e) => setAccentColor(e.target.value)}
+                    className="w-12 h-12 rounded-xl border-2 border-gray-800 cursor-pointer bg-transparent [&::-webkit-color-swatch-wrapper]:p-0.5 [&::-webkit-color-swatch]:rounded-lg [&::-webkit-color-swatch]:border-none"
+                  />
+                </div>
+                <input
+                  type="text"
+                  value={accentColor}
+                  onChange={(e) => setAccentColor(e.target.value)}
+                  placeholder="#F5D76E"
+                  className="flex-1 bg-[#0d0d0d] border border-gray-800 focus:border-[#D4A437] focus:ring-1 focus:ring-[#D4A437] rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none transition-all font-mono"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Color Presets */}
+          <div>
+            <span className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-3">Quick Presets</span>
+            <div className="flex flex-wrap gap-3">
+              {COLOR_PRESETS.map((preset) => {
+                const isActive =
+                  primaryColor === preset.primary &&
+                  secondaryColor === preset.secondary &&
+                  accentColor === preset.accent;
+                return (
+                  <button
+                    key={preset.name}
+                    type="button"
+                    onClick={() => {
+                      setPrimaryColor(preset.primary);
+                      setSecondaryColor(preset.secondary);
+                      setAccentColor(preset.accent);
+                    }}
+                    className={`group flex items-center gap-2 px-3 py-2 rounded-xl border-2 transition-all ${
+                      isActive
+                        ? 'border-[#D4A437] bg-[#D4A437]/10'
+                        : 'border-gray-800 hover:border-gray-600 bg-[#0d0d0d]'
+                    }`}
+                    title={preset.name}
+                  >
+                    {/* Color swatch trio */}
+                    <div className="flex -space-x-1">
+                      <div
+                        className="w-5 h-5 rounded-full border-2 border-black"
+                        style={{ backgroundColor: preset.primary }}
+                      />
+                      <div
+                        className="w-5 h-5 rounded-full border-2 border-black"
+                        style={{ backgroundColor: preset.secondary }}
+                      />
+                      <div
+                        className="w-5 h-5 rounded-full border-2 border-black"
+                        style={{ backgroundColor: preset.accent }}
+                      />
+                    </div>
+                    <span className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors whitespace-nowrap">
+                      {preset.name}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Color Preview Bar */}
+          <div className="bg-[#0d0d0d] border border-gray-800 rounded-2xl p-5">
+            <span className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-3">Color Preview</span>
+            <div className="flex gap-3 h-10 rounded-xl overflow-hidden">
+              <div className="flex-[3] rounded-lg" style={{ backgroundColor: primaryColor }} />
+              <div className="flex-[2] rounded-lg" style={{ backgroundColor: secondaryColor }} />
+              <div className="flex-[1] rounded-lg" style={{ backgroundColor: accentColor }} />
+            </div>
+            <div className="flex gap-3 mt-2">
+              <span className="flex-[3] text-[10px] text-gray-500 text-center">Primary</span>
+              <span className="flex-[2] text-[10px] text-gray-500 text-center">Secondary</span>
+              <span className="flex-[1] text-[10px] text-gray-500 text-center">Accent</span>
+            </div>
           </div>
         </div>
 

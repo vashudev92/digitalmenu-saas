@@ -107,9 +107,19 @@ export async function POST(request: Request) {
         },
       });
 
+      // Create default MenuProfile
+      const defaultProfile = await tx.menuProfile.create({
+        data: {
+          name: 'Main Restaurant',
+          slug: 'main',
+          description: `Default menu for ${restaurantName}`,
+          restaurantId: restaurant.id,
+        },
+      });
+
       // Create QR code
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-      const menuUrl = `${appUrl}/r/${uniqueSlug}`;
+      const menuUrl = `${appUrl}/r/${uniqueSlug}/main`;
       
       // Generate QR Data URL
       const qrDataUrl = await qrcode.toDataURL(menuUrl, {
@@ -126,6 +136,7 @@ export async function POST(request: Request) {
           url: menuUrl,
           dataUrl: qrDataUrl,
           restaurantId: restaurant.id,
+          menuProfileId: defaultProfile.id,
         },
       });
 

@@ -12,13 +12,6 @@ enum Role {
   OWNER
 }
 
-enum ThemeType {
-  LUXURY_DARK
-  ELEGANT_LIGHT
-  CAFE_THEME
-  MODERN_THEME
-}
-
 enum SubscriptionStatus {
   ACTIVE
   TRIAL
@@ -50,8 +43,14 @@ model Restaurant {
   googleMapsUrl  String?
   logo           String?        // URL to logo
   banner         String?        // URL to banner image
-  theme          ThemeType      @default(LUXURY_DARK)
+  theme          String         @default("LUXURY_DARK")
   currencySymbol String         @default("₹")
+  fontHeading    String?        @default("Playfair Display")
+  fontBody       String?        @default("Inter")
+  primaryColor   String?        // Custom primary hex color
+  secondaryColor String?        // Custom secondary hex color
+  accentColor    String?        // Custom accent hex color
+  favicon        String?        // URL to favicon image
   bannerTitle1   String?        @default("Good Food")
   bannerTitle2   String?        @default("Great Mood")
   bannerSubtitle String?        @default("Discover our chef's special selection just for you.")
@@ -65,52 +64,84 @@ model Restaurant {
   owner          User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   categories     Category[]
   menuItems      MenuItem[]
-  qrCode         QRCode?
+  menuProfiles   MenuProfile[]
+  qrCodes        QRCode[]
   subscription   Subscription?
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 }
 
+model MenuProfile {
+  id             String      @id @default(uuid())
+  name           String
+  slug           String
+  description    String?
+  theme          String?     // Override restaurant theme (null = use restaurant default)
+  primaryColor   String?     // Override restaurant color
+  secondaryColor String?
+  accentColor    String?
+  fontHeading    String?     // Override restaurant font
+  fontBody       String?
+  bannerImage    String?     // Profile-specific banner
+  logoOverride   String?     // Optional logo override
+  status         Boolean     @default(true)
+  restaurantId   String
+  restaurant     Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  categories     Category[]
+  menuItems      MenuItem[]
+  qrCode         QRCode?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@unique([restaurantId, slug])
+}
+
 model Category {
-  id           String      @id @default(uuid())
-  name         String
-  icon         String      @default("Utensils") // Lucide icon name
-  sortOrder    Int         @default(0)
-  status       Boolean     @default(true) // Active/Inactive
-  restaurantId String
-  restaurant   Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  menuItems    MenuItem[]
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  id            String       @id @default(uuid())
+  name          String
+  icon          String       @default("Utensils") // Lucide icon name
+  sortOrder     Int          @default(0)
+  status        Boolean      @default(true) // Active/Inactive
+  restaurantId  String
+  restaurant    Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  menuProfileId String?
+  menuProfile   MenuProfile? @relation(fields: [menuProfileId], references: [id], onDelete: SetNull)
+  menuItems     MenuItem[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
   @@unique([restaurantId, name])
 }
 
 model MenuItem {
-  id           String      @id @default(uuid())
-  name         String
-  description  String?
-  price        Float
-  image        String?     // URL to dish image
-  isVeg        Boolean     @default(true)
-  isFeatured   Boolean     @default(false)
-  isAvailable  Boolean     @default(true)
-  categoryId   String
-  category     Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  restaurantId String
-  restaurant   Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  id            String       @id @default(uuid())
+  name          String
+  description   String?
+  price         Float
+  image         String?      // URL to dish image
+  isVeg         Boolean      @default(true)
+  isFeatured    Boolean      @default(false)
+  isAvailable   Boolean      @default(true)
+  categoryId    String
+  category      Category     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  restaurantId  String
+  restaurant    Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  menuProfileId String?
+  menuProfile   MenuProfile? @relation(fields: [menuProfileId], references: [id], onDelete: SetNull)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 }
 
 model QRCode {
-  id           String      @id @default(uuid())
-  url          String      // e.g. scanplate.com/r/slug
-  dataUrl      String      @db.Text // Base64 image
-  restaurantId String      @unique
-  restaurant   Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  id            String       @id @default(uuid())
+  url           String       // e.g. scanplate.com/r/slug/profile-slug
+  dataUrl       String       @db.Text // Base64 image
+  restaurantId  String
+  restaurant    Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  menuProfileId String?      @unique
+  menuProfile   MenuProfile? @relation(fields: [menuProfileId], references: [id], onDelete: SetNull)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 }
 
 model Plan {

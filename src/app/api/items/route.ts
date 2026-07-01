@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 
 // GET all menu items for the user's restaurant
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -20,8 +20,17 @@ export async function GET() {
       return NextResponse.json({ error: 'Restaurant not found' }, { status: 404 });
     }
 
+    // Optional filter by menu profile
+    const { searchParams } = new URL(request.url);
+    const menuProfileId = searchParams.get('menuProfileId');
+
+    const where: any = { restaurantId: restaurant.id };
+    if (menuProfileId) {
+      where.menuProfileId = menuProfileId;
+    }
+
     const items = await db.menuItem.findMany({
-      where: { restaurantId: restaurant.id },
+      where,
       include: {
         category: true,
       },
@@ -55,7 +64,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Restaurant not found' }, { status: 404 });
     }
 
-    const { name, description, price, image, isVeg, isFeatured, isAvailable, categoryId } = await request.json();
+    const { name, description, price, image, isVeg, isFeatured, isAvailable, categoryId, menuProfileId } = await request.json();
 
     if (!name || price === undefined || !categoryId) {
       return NextResponse.json({ error: 'Name, Price and Category are required' }, { status: 400 });
@@ -84,6 +93,7 @@ export async function POST(request: Request) {
         isAvailable: isAvailable !== undefined ? Boolean(isAvailable) : true,
         categoryId,
         restaurantId: restaurant.id,
+        menuProfileId: menuProfileId || null,
       },
     });
 

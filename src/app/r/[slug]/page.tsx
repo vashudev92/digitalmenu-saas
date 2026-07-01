@@ -1,8 +1,10 @@
 import { db } from '@/lib/db';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { ChefHat, Phone, MapPin, ArrowRight, Star, Heart, ShieldCheck, Flame, Sparkles, BookOpen, ChevronDown, ChevronLeft } from 'lucide-react';
+import { ChefHat, ShieldCheck, Flame, Sparkles, BookOpen, Star } from 'lucide-react';
 import type { Metadata } from 'next';
+import { getTheme } from '@/lib/theme-config';
+import FontLoader from '@/components/font-loader';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +20,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return {
     title: restaurant ? `Welcome to ${restaurant.name}` : 'Digital Menu Card',
+    // Dynamic favicon override
+    ...(restaurant?.favicon && {
+      icons: {
+        icon: restaurant.favicon,
+      },
+    }),
   };
 }
 
@@ -56,70 +64,36 @@ export default async function RestaurantWelcomePage({ params }: Props) {
     );
   }
 
-  // Active theme classes mapping
-  const themeClasses: { [key: string]: any } = {
-    LUXURY_DARK: {
-      bg: 'bg-[#0A0A0A]',
-      text: 'text-white',
-      muted: 'text-gray-400',
-      cardBg: 'bg-[#121212] border-[#D4A437]/15',
-      primaryBtn: 'bg-gradient-to-r from-[#D4A437] to-[#B88E2F] hover:from-[#B88E2F] hover:to-[#A37B24] text-black font-bold',
-      accentColor: 'text-[#D4A437]',
-      divider: 'border-gray-900',
-    },
-    ELEGANT_LIGHT: {
-      bg: 'bg-[#F7F3EE]',
-      text: 'text-[#1F1F1F]',
-      muted: 'text-[#777777]',
-      cardBg: 'bg-white border-[#D4A24C]/25 shadow-sm',
-      primaryBtn: 'bg-gradient-to-r from-[#D4A24C] to-[#C2932E] text-white font-bold',
-      accentColor: 'text-[#D4A24C]',
-      divider: 'border-[#ece6df]',
-    },
-    CAFE_THEME: {
-      bg: 'bg-[#1E1610]',
-      text: 'text-[#F5F2EB]',
-      muted: 'text-[#A08875]',
-      cardBg: 'bg-[#291E16] border-[#A07855]/20',
-      primaryBtn: 'bg-gradient-to-r from-[#A07855] to-[#805C3F] text-[#F5F2EB] font-bold',
-      accentColor: 'text-[#A07855]',
-      divider: 'border-[#3B2B20]',
-    },
-    MODERN_THEME: {
-      bg: 'bg-black',
-      text: 'text-white',
-      muted: 'text-zinc-500',
-      cardBg: 'bg-zinc-950 border-zinc-800',
-      primaryBtn: 'bg-white text-black font-bold',
-      accentColor: 'text-white',
-      divider: 'border-zinc-900',
-    },
-  };
+  // Get active theme from centralized config
+  const style = getTheme(restaurant.theme);
 
-  const style = themeClasses[restaurant.theme] || themeClasses.LUXURY_DARK;
+  // Font styles
+  const headingStyle = restaurant.fontHeading ? { fontFamily: `'${restaurant.fontHeading}', serif` } : {};
+  const bodyStyle = restaurant.fontBody ? { fontFamily: `'${restaurant.fontBody}', sans-serif` } : {};
 
   // Fallback default featured item if none is marked
   const todaySpecial = restaurant.menuItems[0] || {
     name: 'Truffle Tagliatelle',
-    description: 'Tandoori marinated cottage cheese with spices, black truffle paste, forest mushrooms.',
+    description: 'Tandoori cottage cheese, black truffle paste, forest mushrooms.',
     price: 320,
     isVeg: true,
     image: 'https://images.unsplash.com/photo-1645112411341-6c4fd023714a?q=80&w=500&fit=crop',
   };
 
   return (
-    <div className={`min-h-screen w-full overflow-x-hidden ${style.bg} ${style.text} flex flex-col justify-between max-w-[500px] mx-auto relative shadow-2xl pb-24`}>
+    <div className={`min-h-screen w-full overflow-x-hidden ${style.bg} ${style.text} flex flex-col justify-between max-w-[500px] mx-auto relative shadow-2xl pb-24`} style={bodyStyle}>
+      <FontLoader headingFont={restaurant.fontHeading} bodyFont={restaurant.fontBody} />
       
       <div>
         {/* Header Bar */}
-        <header className="px-5 py-4 flex flex-col items-center justify-center z-10 sticky top-0 bg-inherit border-b border-gray-500/5">
+        <header className={`px-5 py-4 flex flex-col items-center justify-center z-10 sticky top-0 ${style.headerBg} backdrop-blur-md border-b ${style.divider}`}>
           <div className="flex flex-col items-center">
             {restaurant.logo ? (
               <img src={restaurant.logo} alt="Logo" className="w-8 h-8 rounded-full object-cover mb-1 border border-gray-800" />
             ) : (
-              <ChefHat className={`w-6 h-6 ${style.accentColor} mb-0.5`} />
+              <ChefHat className={`w-6 h-6 ${style.accentText} mb-0.5`} />
             )}
-            <span className="font-serif font-bold text-sm tracking-wide uppercase">{restaurant.name}</span>
+            <span className="font-serif font-bold text-sm tracking-wide uppercase" style={headingStyle}>{restaurant.name}</span>
           </div>
         </header>
 
@@ -134,14 +108,14 @@ export default async function RestaurantWelcomePage({ params }: Props) {
             
             {/* Soft dark text overlay gradient */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-black/10 flex flex-col justify-end p-6">
-              <h2 className="font-serif text-white text-3xl font-bold leading-tight tracking-tight">
+              <h2 className="font-serif text-white text-3xl font-bold leading-tight tracking-tight" style={headingStyle}>
                 {restaurant.bannerTitle1 || 'Good Food'}<br />
-                <span className="text-[#D4A437]">{restaurant.bannerTitle2 || 'Great Mood'}</span>
+                <span className={style.accentText}>{restaurant.bannerTitle2 || 'Great Mood'}</span>
               </h2>
               <p className="text-gray-400 text-xs mt-2 font-medium max-w-xs">
                 {restaurant.bannerSubtitle || "Discover our chef's special selection just for you."}
               </p>
-              <div className="w-10 border-t-2 border-[#D4A437] mt-3" />
+              <div className="w-10 border-t-2 mt-3" style={{ borderColor: style.accentHex }} />
             </div>
           </div>
         </div>
@@ -149,19 +123,19 @@ export default async function RestaurantWelcomePage({ params }: Props) {
         {/* Info badges row */}
         <div className="grid grid-cols-3 gap-3 px-4 mt-5">
           <div className={`p-3.5 rounded-2xl border text-center flex flex-col items-center justify-center ${style.cardBg}`}>
-            <ShieldCheck className={`w-5 h-5 mb-1.5 ${style.accentColor}`} />
+            <ShieldCheck className={`w-5 h-5 mb-1.5 ${style.accentText}`} />
             <span className="text-[10px] font-bold tracking-wider uppercase leading-none">{restaurant.badge1Title || 'Hygienic'}</span>
             <span className="text-[9px] text-gray-500 mt-1 uppercase font-semibold">{restaurant.badge1Desc || 'Kitchen'}</span>
           </div>
           
           <div className={`p-3.5 rounded-2xl border text-center flex flex-col items-center justify-center ${style.cardBg}`}>
-            <Flame className={`w-5 h-5 mb-1.5 ${style.accentColor}`} />
+            <Flame className={`w-5 h-5 mb-1.5 ${style.accentText}`} />
             <span className="text-[10px] font-bold tracking-wider uppercase leading-none">{restaurant.badge2Title || 'Fresh'}</span>
             <span className="text-[9px] text-gray-500 mt-1 uppercase font-semibold">{restaurant.badge2Desc || 'Ingredients'}</span>
           </div>
 
           <div className={`p-3.5 rounded-2xl border text-center flex flex-col items-center justify-center ${style.cardBg}`}>
-            <Sparkles className={`w-5 h-5 mb-1.5 ${style.accentColor}`} />
+            <Sparkles className={`w-5 h-5 mb-1.5 ${style.accentText}`} />
             <span className="text-[10px] font-bold tracking-wider uppercase leading-none">{restaurant.badge3Title || 'Chef'}</span>
             <span className="text-[9px] text-gray-500 mt-1 uppercase font-semibold">{restaurant.badge3Desc || 'Specials'}</span>
           </div>
@@ -170,7 +144,7 @@ export default async function RestaurantWelcomePage({ params }: Props) {
         {/* Today's Special Dish */}
         <div className="px-4 mt-6">
           <div className="flex items-center justify-between mb-3.5">
-            <h3 className="font-serif text-lg font-bold flex items-center gap-1.5">
+            <h3 className="font-serif text-lg font-bold flex items-center gap-1.5" style={headingStyle}>
               Today's Special
             </h3>
           </div>
@@ -196,17 +170,17 @@ export default async function RestaurantWelcomePage({ params }: Props) {
                 </div>
                 <p className={`text-[10px] truncate mt-1 ${style.muted}`}>{todaySpecial.description}</p>
                 <div className="flex items-center gap-1 mt-1.5">
-                  <Star className="w-3 h-3 text-[#D4A437] fill-[#D4A437]" />
-                  <span className="text-[9px] text-[#D4A437] font-bold uppercase tracking-wider">Popular</span>
+                  <Star className={`w-3 h-3 fill-current ${style.accentText}`} />
+                  <span className={`text-[9px] font-bold uppercase tracking-wider ${style.accentText}`}>Popular</span>
                 </div>
               </div>
             </div>
 
             <div className="flex flex-col items-end justify-between h-14 shrink-0">
-              <div className="text-gray-500">
+              <div className={style.muted}>
                 <Star className="w-4 h-4" />
               </div>
-              <span className="font-serif font-bold text-sm text-[#D4A437]">{restaurant.currencySymbol}{todaySpecial.price.toFixed(2)}</span>
+              <span className={`font-serif font-bold text-sm ${style.accentText}`}>{restaurant.currencySymbol}{todaySpecial.price.toFixed(2)}</span>
             </div>
           </Link>
         </div>

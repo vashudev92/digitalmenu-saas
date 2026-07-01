@@ -45,6 +45,11 @@ export default function MenuItemsPage() {
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
+
+  // Menu Profiles
+  const [profiles, setProfiles] = useState<any[]>([]);
+  const [selectedProfileId, setSelectedProfileId] = useState<string>('');
+  const [loadingProfiles, setLoadingProfiles] = useState(true);
   
   // Form states
   const [name, setName] = useState('');
@@ -56,11 +61,39 @@ export default function MenuItemsPage() {
   const [isAvailable, setIsAvailable] = useState(true);
   const [categoryId, setCategoryId] = useState('');
 
-  // Load Items and Categories
-  async function loadData() {
+  // Load Profiles
+  async function loadProfiles() {
     try {
-      const itemsRes = await fetch('/api/items');
-      const catsRes = await fetch('/api/categories');
+      const res = await fetch('/api/menu-profiles');
+      if (res.ok) {
+        const data = await res.json();
+        setProfiles(data.profiles || []);
+        if (data.profiles && data.profiles.length > 0) {
+          setSelectedProfileId(data.profiles[0].id);
+          loadData(data.profiles[0].id);
+        } else {
+          loadData('');
+        }
+      } else {
+        loadData('');
+      }
+    } catch {
+      loadData('');
+    } finally {
+      setLoadingProfiles(false);
+    }
+  }
+
+  // Load Items and Categories
+  async function loadData(profileId?: string) {
+    try {
+      setLoading(true);
+      const targetId = profileId !== undefined ? profileId : selectedProfileId;
+      const itemsUrl = targetId ? `/api/items?menuProfileId=${targetId}` : '/api/items';
+      const catsUrl = targetId ? `/api/categories?menuProfileId=${targetId}` : '/api/categories';
+      
+      const itemsRes = await fetch(itemsUrl);
+      const catsRes = await fetch(catsUrl);
       
       if (!itemsRes.ok || !catsRes.ok) throw new Error('Failed to load menu listings');
       
@@ -77,7 +110,7 @@ export default function MenuItemsPage() {
   }
 
   useEffect(() => {
-    loadData();
+    loadProfiles();
   }, []);
 
   const openAddModal = () => {
@@ -122,17 +155,9 @@ export default function MenuItemsPage() {
       const isEdit = !!editingItem;
       const url = '/api/items';
       const method = isEdit ? 'PUT' : 'POST';
-      const body = {
-        id: editingItem?.id,
-        name,
-        description,
-        price: Number(price),
-        image: image || null,
-        isVeg,
-        isFeatured,
-        isAvailable,
-        categoryId,
-      };
+      const body = isEdit
+        ? { id: editingItem.id, name, description, price, image, isVeg, isFeatured, isAvailable, categoryId }
+        : { name, description, price, image, isVeg, isFeatured, isAvailable, categoryId, menuProfileId: selectedProfileId || undefined };
 
       const res = await fetch(url, {
         method,
@@ -186,7 +211,7 @@ export default function MenuItemsPage() {
     return acc;
   }, {} as { [key: string]: { name: string; items: MenuItem[] } });
 
-  if (loading) {
+  if (loadingProfiles) {
     return (
       <div className="flex h-64 items-center justify-center">
         <Loader2 className="w-10 h-10 animate-spin text-[#D4A437]" />
@@ -196,19 +221,40 @@ export default function MenuItemsPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="font-serif text-3xl font-bold flex items-center gap-2">
             <UtensilsCrossed className="w-8 h-8 text-[#D4A437]" /> Menu Items
           </h1>
           <p className="text-gray-400 text-sm mt-1">Configure your food offerings, pricing, details and images.</p>
         </div>
-        <button
-          onClick={openAddModal}
-          className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-[#D4A437] to-[#B88E2F] text-black font-bold text-sm shadow-[0_0_15px_rgba(212,164,55,0.2)] hover:shadow-[0_0_20px_rgba(212,164,55,0.3)] transition-all cursor-pointer"
-        >
-          <Plus className="w-4 h-4" /> Add Menu Item
-        </button>
+        <div className="flex items-center gap-3">
+          {profiles.length > 0 && (
+            <div className="flex items-center gap-2 bg-gray-950 border border-gray-900 rounded-xl px-3 py-2">
+              <span className="text-xs text-gray-500 font-semibold uppercase">Profile:</span>
+              <select
+                value={selectedProfileId}
+                onChange={(e) => {
+                  setSelectedProfileId(e.target.value);
+                  loadData(e.target.value);
+                }}
+                className="bg-transparent border-none text-xs text-[#D4A437] font-semibold focus:outline-none cursor-pointer"
+              >
+                {profiles.map((p) => (
+                  <option key={p.id} value={p.id} className="bg-black text-white">
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          <button
+            onClick={openAddModal}
+            className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-[#D4A437] to-[#B88E2F] text-black font-bold text-sm shadow-[0_0_15px_rgba(212,164,55,0.2)] hover:shadow-[0_0_20px_rgba(212,164,55,0.3)] transition-all cursor-pointer"
+          >
+            <Plus className="w-4 h-4" /> Add Menu Item
+          </button>
+        </div>
       </div>
 
       {message && (

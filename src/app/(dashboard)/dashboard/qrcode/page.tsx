@@ -23,29 +23,61 @@ export default function QRCodePage() {
   const [scanUrl, setScanUrl] = useState('');
   const [qrBase64, setQrBase64] = useState('');
 
-  useEffect(() => {
-    async function loadQRCode() {
-      try {
-        const res = await fetch('/api/qr');
-        const profileRes = await fetch('/api/profile');
-        
-        if (!res.ok || !profileRes.ok) throw new Error('Failed to load QR details');
-        
-        const data = await res.json();
-        const profileData = await profileRes.json();
-        
-        setScanUrl(data.url);
-        setQrBase64(data.dataUrl);
-        setRestaurantName(profileData.name);
-        setLogoUrl(profileData.logo || '');
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
+  // Menu Profiles
+  const [profiles, setProfiles] = useState<any[]>([]);
+  const [selectedProfileId, setSelectedProfileId] = useState<string>('');
+  const [loadingProfiles, setLoadingProfiles] = useState(true);
 
-    loadQRCode();
+  async function loadProfiles() {
+    try {
+      const res = await fetch('/api/menu-profiles');
+      if (res.ok) {
+        const data = await res.json();
+        setProfiles(data.profiles || []);
+        if (data.profiles && data.profiles.length > 0) {
+          setSelectedProfileId(data.profiles[0].id);
+          await loadQRCode(data.profiles[0].id);
+        } else {
+          await loadQRCode('');
+        }
+      } else {
+        await loadQRCode('');
+      }
+    } catch (err) {
+      console.error(err);
+      await loadQRCode('');
+    } finally {
+      setLoadingProfiles(false);
+    }
+  }
+
+  async function loadQRCode(profileId?: string) {
+    try {
+      setLoading(true);
+      const targetId = profileId !== undefined ? profileId : selectedProfileId;
+      const url = targetId ? `/api/qr?menuProfileId=${targetId}` : '/api/qr';
+      
+      const res = await fetch(url);
+      const profileRes = await fetch('/api/profile');
+      
+      if (!res.ok || !profileRes.ok) throw new Error('Failed to load QR details');
+      
+      const data = await res.json();
+      const profileData = await profileRes.json();
+      
+      setScanUrl(data.url);
+      setQrBase64(data.dataUrl);
+      setRestaurantName(profileData.name);
+      setLogoUrl(profileData.logo || '');
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadProfiles();
   }, []);
 
   const getPlaceholders = () => {
@@ -283,7 +315,7 @@ export default function QRCodePage() {
     window.print();
   };
 
-  if (loading) {
+  if (loadingProfiles) {
     return (
       <div className="flex h-64 items-center justify-center">
         <Loader2 className="w-10 h-10 animate-spin text-[#D4A437]" />
@@ -294,11 +326,33 @@ export default function QRCodePage() {
   return (
     <div className="max-w-5xl mx-auto space-y-8">
       {/* Header Info */}
-      <div className="no-print">
-        <h1 className="font-serif text-3xl font-bold flex items-center gap-2">
-          <QrCode className="w-8 h-8 text-[#D4A437]" /> QR Code Manager
-        </h1>
-        <p className="text-gray-400 text-sm mt-1">Generate, preview, and print physical QR code displays for your guest tables.</p>
+      <div className="no-print flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="font-serif text-3xl font-bold flex items-center gap-2">
+            <QrCode className="w-8 h-8 text-[#D4A437]" /> QR Code Manager
+          </h1>
+          <p className="text-gray-400 text-sm mt-1">Generate, preview, and print physical QR code displays for your guest tables.</p>
+        </div>
+        
+        {profiles.length > 0 && (
+          <div className="flex items-center gap-2 bg-gray-950 border border-gray-900 rounded-xl px-4 py-3 shrink-0">
+            <span className="text-xs text-gray-500 font-semibold uppercase">Menu Profile:</span>
+            <select
+              value={selectedProfileId}
+              onChange={(e) => {
+                setSelectedProfileId(e.target.value);
+                loadQRCode(e.target.value);
+              }}
+              className="bg-transparent border-none text-xs text-[#D4A437] font-semibold focus:outline-none cursor-pointer"
+            >
+              {profiles.map((p) => (
+                <option key={p.id} value={p.id} className="bg-black text-white">
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {/* Main Settings Panel */}

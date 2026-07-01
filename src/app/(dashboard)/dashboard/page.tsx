@@ -23,7 +23,7 @@ export default async function DashboardPage() {
           menuItems: true,
         },
       },
-      qrCode: true,
+      qrCodes: true,
       subscription: {
         include: {
           plan: true,
@@ -38,7 +38,7 @@ export default async function DashboardPage() {
 
   const totalCategories = restaurant._count.categories;
   const totalMenuItems = restaurant._count.menuItems;
-  const qrStatus = restaurant.qrCode ? 'Generated' : 'Not Generated';
+  const qrStatus = restaurant.qrCodes.length > 0 ? 'Generated' : 'Not Generated';
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">

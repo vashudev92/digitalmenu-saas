@@ -6,6 +6,7 @@ import { useSession, signOut } from 'next-auth/react';
 import {
   LayoutDashboard,
   Store,
+  BookCopy,
   Layers,
   UtensilsCrossed,
   QrCode,
@@ -22,6 +23,7 @@ export default function DashboardSidebar() {
   const menuItems = [
     { name: 'Dashboard', icon: <LayoutDashboard className="w-5 h-5" />, href: '/dashboard' },
     { name: 'Restaurant Profile', icon: <Store className="w-5 h-5" />, href: '/dashboard/profile' },
+    { name: 'Menu Profiles', icon: <BookCopy className="w-5 h-5" />, href: '/dashboard/menu-profiles' },
     { name: 'Categories', icon: <Layers className="w-5 h-5" />, href: '/dashboard/categories' },
     { name: 'Menu Items', icon: <UtensilsCrossed className="w-5 h-5" />, href: '/dashboard/items' },
     { name: 'QR Code', icon: <QrCode className="w-5 h-5" />, href: '/dashboard/qrcode' },

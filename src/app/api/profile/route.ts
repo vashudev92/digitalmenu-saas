@@ -28,7 +28,7 @@ export async function GET() {
 
     const restaurant = await db.restaurant.findUnique({
       where: { ownerId: session.user.id },
-      include: { qrCode: true, subscription: { include: { plan: true } } },
+      include: { qrCodes: true, subscription: { include: { plan: true } } },
     });
 
     if (!restaurant) {
@@ -65,6 +65,12 @@ export async function PUT(request: Request) {
       banner,
       theme,
       currencySymbol,
+      fontHeading,
+      fontBody,
+      primaryColor,
+      secondaryColor,
+      accentColor,
+      favicon,
       bannerTitle1,
       bannerTitle2,
       bannerSubtitle,
@@ -132,6 +138,12 @@ export async function PUT(request: Request) {
           banner,
           theme,
           currencySymbol,
+          fontHeading: fontHeading || null,
+          fontBody: fontBody || null,
+          primaryColor: primaryColor || null,
+          secondaryColor: secondaryColor || null,
+          accentColor: accentColor || null,
+          favicon: favicon || null,
           bannerTitle1,
           bannerTitle2,
           bannerSubtitle,
@@ -158,18 +170,27 @@ export async function PUT(request: Request) {
           },
         });
 
-        await tx.qRCode.upsert({
+        // Update all QR codes for this restaurant
+        const existingQRs = await tx.qRCode.findMany({
           where: { restaurantId: updated.id },
-          create: {
-            url: newMenuUrl,
-            dataUrl: qrDataUrl,
-            restaurantId: updated.id,
-          },
-          update: {
-            url: newMenuUrl,
-            dataUrl: qrDataUrl,
-          },
         });
+
+        if (existingQRs.length > 0) {
+          for (const qr of existingQRs) {
+            const profileSlug = qr.menuProfileId ? 
+              (await tx.menuProfile.findUnique({ where: { id: qr.menuProfileId } }))?.slug : null;
+            const qrUrl = profileSlug ? `${appUrl}/r/${finalSlug}/${profileSlug}` : `${appUrl}/r/${finalSlug}`;
+            const newDataUrl = await qrcode.toDataURL(qrUrl, {
+              width: 512,
+              margin: 2,
+              color: { dark: '#000000', light: '#FFFFFF' },
+            });
+            await tx.qRCode.update({
+              where: { id: qr.id },
+              data: { url: qrUrl, dataUrl: newDataUrl },
+            });
+          }
+        }
       }
 
       return updated;

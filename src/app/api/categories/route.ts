@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 
 // GET all categories for the user's restaurant
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -20,8 +20,17 @@ export async function GET() {
       return NextResponse.json({ error: 'Restaurant not found' }, { status: 404 });
     }
 
+    // Optional filter by menu profile
+    const { searchParams } = new URL(request.url);
+    const menuProfileId = searchParams.get('menuProfileId');
+
+    const where: any = { restaurantId: restaurant.id };
+    if (menuProfileId) {
+      where.menuProfileId = menuProfileId;
+    }
+
     const categories = await db.category.findMany({
-      where: { restaurantId: restaurant.id },
+      where,
       orderBy: { sortOrder: 'asc' },
     });
 
@@ -49,7 +58,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Restaurant not found' }, { status: 404 });
     }
 
-    const { name, icon, sortOrder, status } = await request.json();
+    const { name, icon, sortOrder, status, menuProfileId } = await request.json();
 
     if (!name) {
       return NextResponse.json({ error: 'Category Name is required' }, { status: 400 });
@@ -76,6 +85,7 @@ export async function POST(request: Request) {
         sortOrder: sortOrder !== undefined ? Number(sortOrder) : 0,
         status: status !== undefined ? Boolean(status) : true,
         restaurantId: restaurant.id,
+        menuProfileId: menuProfileId || null,
       },
     });
 

@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import MenuClientView from '@/components/menu-client-view';
 import type { Metadata } from 'next';
 
@@ -22,12 +22,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function RestaurantMenuPage({ params }: Props) {
   const { slug } = await params;
-  console.log('[RestaurantMenuPage] Fetching menu for slug:', slug);
   
   const restaurant = await db.restaurant.findUnique({
     where: { slug },
     include: {
       subscription: true,
+      menuProfiles: {
+        where: { status: true },
+        orderBy: { createdAt: 'asc' },
+        take: 1,
+      },
       categories: {
         where: { status: true },
         orderBy: { sortOrder: 'asc' },
@@ -40,11 +44,14 @@ export default async function RestaurantMenuPage({ params }: Props) {
     },
   });
 
-  console.log('[RestaurantMenuPage] DB query finished. Restaurant found:', !!restaurant);
-
   if (!restaurant) {
-    console.log('[RestaurantMenuPage] Restaurant not found, calling notFound()');
     notFound();
+  }
+
+  // If restaurant has a default profile, redirect to profile-specific URL
+  // This ensures backward compatibility: old QR codes pointing to /r/slug/menu still work
+  if (restaurant.menuProfiles.length > 0) {
+    redirect(`/r/${slug}/${restaurant.menuProfiles[0].slug}`);
   }
 
   // Check if restaurant subscription is suspended
@@ -61,7 +68,7 @@ export default async function RestaurantMenuPage({ params }: Props) {
     );
   }
 
-  // Filter categories to only those that have items
+  // Fallback: render menu directly (no profiles exist)
   const activeCategories = restaurant.categories.filter((cat) => 
     restaurant.menuItems.some((item) => item.categoryId === cat.id)
   );
@@ -73,6 +80,8 @@ export default async function RestaurantMenuPage({ params }: Props) {
       logoUrl={restaurant.logo || ''}
       theme={restaurant.theme}
       currencySymbol={restaurant.currencySymbol}
+      fontHeading={restaurant.fontHeading}
+      fontBody={restaurant.fontBody}
       categories={activeCategories.map((c) => ({ id: c.id, name: c.name, icon: c.icon }))}
       menuItems={restaurant.menuItems.map((item) => ({
         id: item.id,

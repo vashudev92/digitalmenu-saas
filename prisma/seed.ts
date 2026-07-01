@@ -1,4 +1,4 @@
-import { PrismaClient, Role, ThemeType, SubscriptionStatus } from '@prisma/client';
+import { PrismaClient, Role, SubscriptionStatus } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import qrcode from 'qrcode';
 
@@ -17,7 +17,7 @@ const damanRestaurants = [
     whatsApp: '+919876543210',
     logo: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=200&h=200&fit=crop',
     banner: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1200&h=400&fit=crop',
-    theme: ThemeType.LUXURY_DARK,
+    theme: 'LUXURY_DARK',
     currencySymbol: '₹',
     categories: [
       {
@@ -59,7 +59,7 @@ const damanRestaurants = [
     whatsApp: '+919876543211',
     logo: 'https://images.unsplash.com/photo-1610192244261-3f33de3f55e4?q=80&w=200&h=200&fit=crop',
     banner: 'https://images.unsplash.com/photo-1601050690597-df056fb4ce78?q=80&w=1200&h=400&fit=crop',
-    theme: ThemeType.ELEGANT_LIGHT,
+    theme: 'ELEGANT_LIGHT',
     currencySymbol: '₹',
     categories: [
       {
@@ -92,7 +92,7 @@ const damanRestaurants = [
     whatsApp: '+919876543212',
     logo: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?q=80&w=200&h=200&fit=crop',
     banner: 'https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=1200&h=400&fit=crop',
-    theme: ThemeType.MODERN_THEME,
+    theme: 'MINIMAL_WHITE',
     currencySymbol: '₹',
     categories: [
       {
@@ -125,7 +125,7 @@ const damanRestaurants = [
     whatsApp: '+919876543213',
     logo: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?q=80&w=200&h=200&fit=crop',
     banner: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=1200&h=400&fit=crop',
-    theme: ThemeType.CAFE_THEME,
+    theme: 'RUSTIC_CAFE',
     currencySymbol: '₹',
     categories: [
       {
@@ -157,7 +157,7 @@ const damanRestaurants = [
     whatsApp: '+919876543214',
     logo: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?q=80&w=200&h=200&fit=crop',
     banner: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?q=80&w=1200&h=400&fit=crop',
-    theme: ThemeType.LUXURY_DARK,
+    theme: 'LUXURY_DARK',
     currencySymbol: '₹',
     categories: [
       {
@@ -189,7 +189,7 @@ const damanRestaurants = [
     whatsApp: '+919876543215',
     logo: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?q=80&w=200&h=200&fit=crop',
     banner: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?q=80&w=1200&h=400&fit=crop',
-    theme: ThemeType.ELEGANT_LIGHT,
+    theme: 'ELEGANT_LIGHT',
     currencySymbol: '₹',
     categories: [
       {
@@ -221,7 +221,7 @@ const damanRestaurants = [
     whatsApp: '+919876543216',
     logo: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?q=80&w=200&h=200&fit=crop',
     banner: 'https://images.unsplash.com/photo-1596797038530-2c107229654b?q=80&w=1200&h=400&fit=crop',
-    theme: ThemeType.MODERN_THEME,
+    theme: 'MINIMAL_WHITE',
     currencySymbol: '₹',
     categories: [
       {
@@ -254,7 +254,7 @@ const damanRestaurants = [
     whatsApp: '+919876543217',
     logo: 'https://images.unsplash.com/photo-1550547660-d9450f859349?q=80&w=200&h=200&fit=crop',
     banner: 'https://images.unsplash.com/photo-1571091718767-18b5b1457add?q=80&w=1200&h=400&fit=crop',
-    theme: ThemeType.CAFE_THEME,
+    theme: 'RUSTIC_CAFE',
     currencySymbol: '₹',
     categories: [
       {
@@ -286,7 +286,7 @@ const damanRestaurants = [
     whatsApp: '+919876543218',
     logo: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?q=80&w=200&h=200&fit=crop',
     banner: 'https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=1200&h=400&fit=crop',
-    theme: ThemeType.LUXURY_DARK,
+    theme: 'LUXURY_DARK',
     currencySymbol: '₹',
     categories: [
       {
@@ -318,7 +318,7 @@ const damanRestaurants = [
     whatsApp: '+919876543219',
     logo: 'https://images.unsplash.com/photo-1601050690597-df056fb4ce78?q=80&w=200&h=200&fit=crop',
     banner: 'https://images.unsplash.com/photo-1626803775151-61d756612f97?q=80&w=1200&h=400&fit=crop',
-    theme: ThemeType.CAFE_THEME,
+    theme: 'RUSTIC_CAFE',
     currencySymbol: '₹',
     categories: [
       {
@@ -430,7 +430,7 @@ async function main() {
       googleMapsUrl: 'https://maps.google.com/?q=Trattoria+Bella',
       logo: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?q=80&w=200&h=200&fit=crop',
       banner: 'https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=1200&h=400&fit=crop',
-      theme: ThemeType.LUXURY_DARK,
+      theme: 'LUXURY_DARK',
       currencySymbol: '$',
       ownerId: trattoriaOwner.id,
     },

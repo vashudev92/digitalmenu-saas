@@ -60,10 +60,41 @@ export default function CategoriesPage() {
   const [catIcon, setCatIcon] = useState('Utensils');
   const [catStatus, setCatStatus] = useState(true);
 
-  // Load Categories
-  async function loadCategories() {
+  // Menu Profiles
+  const [profiles, setProfiles] = useState<any[]>([]);
+  const [selectedProfileId, setSelectedProfileId] = useState<string>('');
+  const [loadingProfiles, setLoadingProfiles] = useState(true);
+
+  // Load Profiles
+  async function loadProfiles() {
     try {
-      const res = await fetch('/api/categories');
+      const res = await fetch('/api/menu-profiles');
+      if (res.ok) {
+        const data = await res.json();
+        setProfiles(data.profiles || []);
+        if (data.profiles && data.profiles.length > 0) {
+          setSelectedProfileId(data.profiles[0].id);
+          loadCategories(data.profiles[0].id);
+        } else {
+          loadCategories('');
+        }
+      } else {
+        loadCategories('');
+      }
+    } catch {
+      loadCategories('');
+    } finally {
+      setLoadingProfiles(false);
+    }
+  }
+
+  // Load Categories
+  async function loadCategories(profileId?: string) {
+    try {
+      setLoading(true);
+      const targetId = profileId !== undefined ? profileId : selectedProfileId;
+      const url = targetId ? `/api/categories?menuProfileId=${targetId}` : '/api/categories';
+      const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to load categories');
       const data = await res.json();
       setCategories(data);
@@ -75,7 +106,7 @@ export default function CategoriesPage() {
   }
 
   useEffect(() => {
-    loadCategories();
+    loadProfiles();
   }, []);
 
   const openAddModal = () => {
@@ -109,7 +140,7 @@ export default function CategoriesPage() {
       const method = isEdit ? 'PUT' : 'POST';
       const body = isEdit
         ? { id: editingCategory.id, name: catName, icon: catIcon, status: catStatus }
-        : { name: catName, icon: catIcon, status: catStatus, sortOrder: categories.length + 1 };
+        : { name: catName, icon: catIcon, status: catStatus, sortOrder: categories.length + 1, menuProfileId: selectedProfileId || undefined };
 
       const res = await fetch(url, {
         method,
@@ -218,7 +249,7 @@ export default function CategoriesPage() {
     }
   };
 
-  if (loading) {
+  if (loadingProfiles) {
     return (
       <div className="flex h-64 items-center justify-center">
         <Loader2 className="w-10 h-10 animate-spin text-[#D4A437]" />
@@ -228,19 +259,40 @@ export default function CategoriesPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="font-serif text-3xl font-bold flex items-center gap-2">
             <Layers className="w-8 h-8 text-[#D4A437]" /> Menu Categories
           </h1>
           <p className="text-gray-400 text-sm mt-1">Organize your menu card (e.g. Starters, Main Course, Desserts).</p>
         </div>
-        <button
-          onClick={openAddModal}
-          className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-[#D4A437] to-[#B88E2F] text-black font-bold text-sm shadow-[0_0_15px_rgba(212,164,55,0.2)] hover:shadow-[0_0_20px_rgba(212,164,55,0.3)] transition-all cursor-pointer"
-        >
-          <Plus className="w-4 h-4" /> Add Category
-        </button>
+        <div className="flex items-center gap-3">
+          {profiles.length > 0 && (
+            <div className="flex items-center gap-2 bg-gray-950 border border-gray-900 rounded-xl px-3 py-2">
+              <span className="text-xs text-gray-500 font-semibold uppercase">Profile:</span>
+              <select
+                value={selectedProfileId}
+                onChange={(e) => {
+                  setSelectedProfileId(e.target.value);
+                  loadCategories(e.target.value);
+                }}
+                className="bg-transparent border-none text-xs text-[#D4A437] font-semibold focus:outline-none cursor-pointer"
+              >
+                {profiles.map((p) => (
+                  <option key={p.id} value={p.id} className="bg-black text-white">
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          <button
+            onClick={openAddModal}
+            className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-[#D4A437] to-[#B88E2F] text-black font-bold text-sm shadow-[0_0_15px_rgba(212,164,55,0.2)] hover:shadow-[0_0_20px_rgba(212,164,55,0.3)] transition-all cursor-pointer"
+          >
+            <Plus className="w-4 h-4" /> Add Category
+          </button>
+        </div>
       </div>
 
       {message && (

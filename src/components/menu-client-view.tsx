@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useRef, useMemo } from 'react';
+import { getTheme } from '@/lib/theme-config';
+import FontLoader from '@/components/font-loader';
 import {
   Search,
   Sparkles,
@@ -48,6 +50,8 @@ interface Props {
   logoUrl: string;
   theme: string;
   currencySymbol?: string;
+  fontHeading?: string | null;
+  fontBody?: string | null;
   categories: CategoryOption[];
   menuItems: MenuItemOption[];
   address?: string | null;
@@ -73,6 +77,8 @@ export default function MenuClientView({
   logoUrl,
   theme,
   currencySymbol = '₹',
+  fontHeading,
+  fontBody,
   categories,
   menuItems,
   address,
@@ -85,63 +91,12 @@ export default function MenuClientView({
   const [vegOnly, setVegOnly] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
 
-  // Theme mapping classes
-  const themeClasses: { [key: string]: any } = {
-    LUXURY_DARK: {
-      bg: 'bg-[#0A0A0A]',
-      text: 'text-white',
-      muted: 'text-gray-400',
-      headerBg: 'bg-[#0A0A0A]/95',
-      cardBg: 'bg-[#121212] border-[#D4A437]/20',
-      inputBg: 'bg-[#121212] border-gray-900 focus:border-[#D4A437]',
-      catActive: 'bg-[#D4A437] text-black border-[#D4A437]',
-      catInactive: 'bg-[#121212] text-white border-gray-900',
-      accentText: 'text-[#D4A437]',
-      divider: 'border-gray-900',
-      navBg: 'bg-[#121212]/90 border-[#D4A437]/15',
-    },
-    ELEGANT_LIGHT: {
-      bg: 'bg-[#F7F3EE]',
-      text: 'text-[#1F1F1F]',
-      muted: 'text-[#777777]',
-      headerBg: 'bg-[#F7F3EE]/95',
-      cardBg: 'bg-white border-[#D4A24C]/25 shadow-sm',
-      inputBg: 'bg-white border-[#ece6df] focus:border-[#D4A24C]',
-      catActive: 'bg-[#D4A24C] text-white border-[#D4A24C]',
-      catInactive: 'bg-white text-gray-500 border-[#ece6df]',
-      accentText: 'text-[#D4A24C]',
-      divider: 'border-[#ece6df]',
-      navBg: 'bg-white/90 border-[#D4A24C]/15',
-    },
-    CAFE_THEME: {
-      bg: 'bg-[#1E1610]',
-      text: 'text-[#F5F2EB]',
-      muted: 'text-[#A08875]',
-      headerBg: 'bg-[#1E1610]/95',
-      cardBg: 'bg-[#291E16] border-[#A07855]/20',
-      inputBg: 'bg-[#291E16] border-[#3B2B20] focus:border-[#A07855]',
-      catActive: 'bg-[#A07855] text-[#F5F2EB] border-[#A07855]',
-      catInactive: 'bg-[#291E16] text-[#A08875] border-[#3B2B20]',
-      accentText: 'text-[#A07855]',
-      divider: 'border-[#3B2B20]',
-      navBg: 'bg-[#291E16]/90 border-[#A07855]/15',
-    },
-    MODERN_THEME: {
-      bg: 'bg-black',
-      text: 'text-white',
-      muted: 'text-zinc-500',
-      headerBg: 'bg-black/95',
-      cardBg: 'bg-zinc-950 border-zinc-850',
-      inputBg: 'bg-zinc-950 border-zinc-850 focus:border-white',
-      catActive: 'bg-white text-black border-white',
-      catInactive: 'bg-zinc-950 text-zinc-400 border-zinc-850',
-      accentText: 'text-white',
-      divider: 'border-zinc-900',
-      navBg: 'bg-zinc-950/90 border-zinc-850',
-    },
-  };
+  // Theme from centralized config
+  const style = getTheme(theme);
 
-  const style = themeClasses[theme] || themeClasses.LUXURY_DARK;
+  // Font styles
+  const headingStyle = fontHeading ? { fontFamily: `'${fontHeading}', serif` } : {};
+  const bodyStyle = fontBody ? { fontFamily: `'${fontBody}', sans-serif` } : {};
 
   // Filter items matching active filters
   const getFilteredItems = (catId: string) => {
@@ -162,8 +117,8 @@ export default function MenuClientView({
   };
 
   return (
-    <div className={`min-h-screen w-full ${style.bg} ${style.text} flex flex-col justify-between max-w-[500px] mx-auto shadow-2xl pb-24 overflow-x-hidden relative`}>
-      
+    <div className={`min-h-screen w-full ${style.bg} ${style.text} flex flex-col justify-between max-w-[500px] mx-auto shadow-2xl pb-24 overflow-x-hidden relative`} style={bodyStyle}>
+      <FontLoader headingFont={fontHeading} bodyFont={fontBody} />
       <div>
         {/* Sticky Header & Category Wrapper (Unified to prevent mobile overlaps) */}
         <div className={`sticky top-0 z-30 ${style.headerBg} backdrop-blur-md border-b ${style.divider}`}>
@@ -182,7 +137,7 @@ export default function MenuClientView({
               ) : (
                 <ChefHat className={`w-5 h-5 ${style.accentText} mb-0.5`} />
               )}
-              <span className="font-serif font-bold text-sm tracking-wide uppercase">{restaurantName}</span>
+              <span className="font-serif font-bold text-sm tracking-wide uppercase" style={headingStyle}>{restaurantName}</span>
             </div>
             
             <div className="w-10"></div>
@@ -278,7 +233,7 @@ export default function MenuClientView({
                 <div key={cat.id} className="space-y-4">
                   {/* Category Title Divider */}
                   <div className={`flex items-center justify-between border-b ${style.divider} pb-2`}>
-                    <h3 className="font-serif text-lg font-bold tracking-wide">
+                    <h3 className="font-serif text-lg font-bold tracking-wide" style={headingStyle}>
                       {cat.name} <span className={`text-xs ml-1 font-serif italic ${style.muted}`}>• {itemsInCat.length} items</span>
                     </h3>
                     <span className={`text-[10px] uppercase font-bold tracking-widest hover:underline cursor-pointer ${style.accentText}`}>
@@ -315,7 +270,7 @@ export default function MenuClientView({
                             <p className={`text-[10px] leading-relaxed mt-1 line-clamp-2 ${style.muted}`}>{item.description}</p>
                             
                             {item.isFeatured && (
-                              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-[#D4A437]/10 border border-[#D4A437]/25 text-[8px] font-bold text-[#D4A437] mt-1.5">
+                              <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-bold mt-1.5 ${style.priceBadge}`}>
                                 Chef Pick
                               </span>
                             )}
@@ -379,32 +334,32 @@ export default function MenuClientView({
       {/* INFO DRAWER / MODAL */}
       {isInfoOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="w-full max-w-sm glass-gold rounded-t-3xl sm:rounded-3xl p-6 relative">
+          <div className={`w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-6 relative border ${style.cardBg} ${style.bg}`} style={{ backdropFilter: 'blur(20px)' }}>
             <button
               onClick={() => setIsInfoOpen(false)}
-              className="absolute top-5 right-5 p-1 rounded-lg text-gray-400 hover:text-white hover:bg-gray-900"
+              className={`absolute top-5 right-5 p-1 rounded-lg ${style.muted} hover:opacity-80`}
             >
               <X className="w-5 h-5" />
             </button>
 
-            <h3 className="font-serif text-2xl font-bold mb-6 text-[#D4A437] border-b border-gray-900 pb-2">
+            <h3 className={`font-serif text-2xl font-bold mb-6 ${style.accentText} border-b ${style.divider} pb-2`} style={headingStyle}>
               Restaurant Info
             </h3>
 
             <div className="space-y-5 text-sm">
               <div className="flex items-start gap-3">
-                <ChefHat className="w-5 h-5 text-[#D4A437] shrink-0 mt-0.5" />
+                <ChefHat className={`w-5 h-5 ${style.accentText} shrink-0 mt-0.5`} />
                 <div>
-                  <h4 className="font-semibold text-white">{restaurantName}</h4>
-                  <span className="text-xs text-gray-400 italic">Premium Contactless Diner</span>
+                  <h4 className={`font-semibold ${style.text}`}>{restaurantName}</h4>
+                  <span className={`text-xs italic ${style.muted}`}>Premium Contactless Diner</span>
                 </div>
               </div>
 
               {address && (
-                <div className="flex items-start gap-3 text-gray-300">
-                  <MapPin className="w-5 h-5 text-[#D4A437] shrink-0 mt-0.5" />
+                <div className={`flex items-start gap-3 ${style.muted}`}>
+                  <MapPin className={`w-5 h-5 ${style.accentText} shrink-0 mt-0.5`} />
                   {googleMapsUrl ? (
-                    <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer" className="text-xs leading-relaxed hover:underline text-gray-300">
+                    <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer" className={`text-xs leading-relaxed hover:underline ${style.muted}`}>
                       {address}
                     </a>
                   ) : (
@@ -416,23 +371,23 @@ export default function MenuClientView({
               )}
 
               {phone && (
-                <div className="flex items-center gap-3 text-gray-300">
-                  <Phone className="w-5 h-5 text-[#D4A437] shrink-0" />
-                  <a href={`tel:${phone}`} className="text-xs hover:underline text-gray-300">{phone}</a>
+                <div className={`flex items-center gap-3 ${style.muted}`}>
+                  <Phone className={`w-5 h-5 ${style.accentText} shrink-0`} />
+                  <a href={`tel:${phone}`} className={`text-xs hover:underline ${style.muted}`}>{phone}</a>
                 </div>
               )}
 
               {website && (
-                <div className="flex items-center gap-3 text-gray-300">
-                  <Globe className="w-5 h-5 text-[#D4A437] shrink-0" />
-                  <a href={website.startsWith('http') ? website : `https://${website}`} target="_blank" rel="noopener noreferrer" className="text-xs text-[#D4A437] hover:underline">
+                <div className={`flex items-center gap-3 ${style.muted}`}>
+                  <Globe className={`w-5 h-5 ${style.accentText} shrink-0`} />
+                  <a href={website.startsWith('http') ? website : `https://${website}`} target="_blank" rel="noopener noreferrer" className={`text-xs ${style.accentText} hover:underline`}>
                     {website.replace(/https?:\/\/(www\.)?/, '')}
                   </a>
                 </div>
               )}
 
               {!address && !phone && !website && (
-                <p className="text-xs text-gray-400 text-center py-4">
+                <p className={`text-xs ${style.muted} text-center py-4`}>
                   Contact details are not available.
                 </p>
               )}
@@ -440,7 +395,7 @@ export default function MenuClientView({
 
             <button
               onClick={() => setIsInfoOpen(false)}
-              className="w-full py-3.5 mt-6 rounded-xl bg-gradient-to-r from-[#D4A437] to-[#B88E2F] text-black font-bold text-xs uppercase tracking-wider shadow-md"
+              className={`w-full py-3.5 mt-6 rounded-xl font-bold text-xs uppercase tracking-wider shadow-md ${style.primaryBtn}`}
             >
               Close Info
             </button>
