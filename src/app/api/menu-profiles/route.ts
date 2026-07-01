@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, slug, description, theme, primaryColor, secondaryColor, accentColor, fontHeading, fontBody, bannerImage, logoOverride } = body;
+    const { name, slug, description, theme, primaryColor, secondaryColor, accentColor, fontHeading, fontBody, bannerImage, logoOverride, openingHours } = body;
 
     if (!name || !slug) {
       return NextResponse.json({ error: 'Name and slug are required' }, { status: 400 });
@@ -102,6 +102,7 @@ export async function POST(request: NextRequest) {
         fontBody: fontBody || null,
         bannerImage: bannerImage || null,
         logoOverride: logoOverride || null,
+        openingHours: openingHours || null,
         restaurantId: restaurant.id,
       },
     });

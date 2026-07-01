@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   UtensilsCrossed,
   Plus,
@@ -12,7 +12,9 @@ import {
   X,
   Star,
   Check,
-  Slash
+  Slash,
+  Search,
+  ChevronDown
 } from 'lucide-react';
 import ImageCropper from '@/components/image-cropper';
 
@@ -50,6 +52,21 @@ export default function MenuItemsPage() {
   const [profiles, setProfiles] = useState<any[]>([]);
   const [selectedProfileId, setSelectedProfileId] = useState<string>('');
   const [loadingProfiles, setLoadingProfiles] = useState(true);
+
+  // Searchable Profile Dropdown States
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [profileSearch, setProfileSearch] = useState('');
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target as Node)) {
+        setIsProfileDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
   
   // Form states
   const [name, setName] = useState('');
@@ -230,22 +247,68 @@ export default function MenuItemsPage() {
         </div>
         <div className="flex items-center gap-3">
           {profiles.length > 0 && (
-            <div className="flex items-center gap-2 bg-gray-950 border border-gray-900 rounded-xl px-3 py-2">
-              <span className="text-xs text-gray-500 font-semibold uppercase">Profile:</span>
-              <select
-                value={selectedProfileId}
-                onChange={(e) => {
-                  setSelectedProfileId(e.target.value);
-                  loadData(e.target.value);
+            <div className="relative shrink-0 text-left" ref={profileDropdownRef}>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsProfileDropdownOpen(!isProfileDropdownOpen);
+                  setProfileSearch('');
                 }}
-                className="bg-transparent border-none text-xs text-[#D4A437] font-semibold focus:outline-none cursor-pointer"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gray-950 border border-gray-900 text-xs font-semibold text-gray-300 hover:text-white hover:border-[#D4A437]/30 transition-all cursor-pointer select-none"
               >
-                {profiles.map((p) => (
-                  <option key={p.id} value={p.id} className="bg-black text-white">
-                    {p.name}
-                  </option>
-                ))}
-              </select>
+                <span className="text-gray-500 uppercase font-bold text-[10px]">Profile:</span>
+                <span className="text-[#D4A437] font-bold">
+                  {profiles.find(p => p.id === selectedProfileId)?.name || 'Select Profile'}
+                </span>
+                <ChevronDown className={`w-3.5 h-3.5 text-gray-505 transition-transform ${isProfileDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isProfileDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-60 bg-black border border-gray-800 rounded-2xl shadow-2xl shadow-black/90 z-50 p-2 space-y-2 animate-in fade-in slide-in-from-top-1 duration-150">
+                  {/* Search Input */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
+                    <input
+                      type="text"
+                      value={profileSearch}
+                      onChange={(e) => setProfileSearch(e.target.value)}
+                      placeholder="Search profiles..."
+                      className="w-full bg-gray-950 border border-gray-800 focus:border-[#D4A437] rounded-xl pl-9 pr-3 py-2 text-xs text-white focus:outline-none transition-all"
+                    />
+                  </div>
+
+                  {/* Options List */}
+                  <div className="max-h-40 overflow-y-auto divide-y divide-gray-900/60 scrollbar-thin">
+                    {profiles
+                      .filter(p => p.name.toLowerCase().includes(profileSearch.toLowerCase()))
+                      .map((p) => {
+                        const isSelected = p.id === selectedProfileId;
+                        return (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedProfileId(p.id);
+                              loadData(p.id);
+                              setIsProfileDropdownOpen(false);
+                            }}
+                            className={`w-full text-left px-3 py-2.5 rounded-lg text-xs font-medium transition-colors flex items-center justify-between cursor-pointer ${
+                              isSelected
+                                ? 'bg-[#D4A437]/10 text-[#D4A437]'
+                                : 'text-gray-400 hover:bg-gray-950 hover:text-white'
+                            }`}
+                          >
+                            <span className="truncate">{p.name}</span>
+                            {isSelected && <Check className="w-3.5 h-3.5 text-[#D4A437]" />}
+                          </button>
+                        );
+                      })}
+                    {profiles.filter(p => p.name.toLowerCase().includes(profileSearch.toLowerCase())).length === 0 && (
+                      <p className="text-center text-[10px] text-gray-600 py-3">No profiles found</p>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
           <button

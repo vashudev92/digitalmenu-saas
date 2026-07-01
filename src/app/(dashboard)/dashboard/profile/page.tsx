@@ -28,6 +28,7 @@ export default function ProfilePage() {
   const [favicon, setFavicon] = useState('');
   const [theme, setTheme] = useState<string>('LUXURY_DARK');
   const [currencySymbol, setCurrencySymbol] = useState('₹');
+  const [openingHours, setOpeningHours] = useState('11:00 AM - 11:00 PM');
 
   // Typography states
   const [fontHeading, setFontHeading] = useState('Playfair Display');
@@ -92,6 +93,7 @@ export default function ProfilePage() {
         setFavicon(data.favicon || '');
         setTheme(data.theme || 'LUXURY_DARK');
         setCurrencySymbol(data.currencySymbol || '₹');
+        setOpeningHours(data.openingHours || '11:00 AM - 11:00 PM');
 
         // Typography
         setFontHeading(data.fontHeading || 'Playfair Display');
@@ -149,6 +151,7 @@ export default function ProfilePage() {
           favicon,
           theme,
           currencySymbol,
+          openingHours,
           fontHeading,
           fontBody,
           primaryColor,
@@ -799,6 +802,21 @@ export default function ProfilePage() {
                   onChange={(e) => setGoogleMapsUrl(e.target.value)}
                   placeholder="https://maps.google.com/?q=..."
                   className="w-full bg-[#0d0d0d] border border-gray-800 focus:border-[#D4A437] focus:ring-1 focus:ring-[#D4A437] rounded-xl pl-9 pr-4 py-3.5 text-sm text-white focus:outline-none transition-all"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+                Opening Hours
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={openingHours}
+                  onChange={(e) => setOpeningHours(e.target.value)}
+                  placeholder="e.g. 11:00 AM - 11:00 PM"
+                  className="w-full bg-[#0d0d0d] border border-gray-800 focus:border-[#D4A437] focus:ring-1 focus:ring-[#D4A437] rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none transition-all"
                 />
               </div>
             </div>

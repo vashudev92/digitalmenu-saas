@@ -85,7 +85,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     const {
       name, slug, description, theme,
       primaryColor, secondaryColor, accentColor,
-      fontHeading, fontBody, bannerImage, logoOverride, status,
+      fontHeading, fontBody, bannerImage, logoOverride, status, openingHours,
     } = body;
 
     // Validate slug if changed
@@ -123,6 +123,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         ...(fontBody !== undefined && { fontBody: fontBody || null }),
         ...(bannerImage !== undefined && { bannerImage: bannerImage || null }),
         ...(logoOverride !== undefined && { logoOverride: logoOverride || null }),
+        ...(openingHours !== undefined && { openingHours: openingHours || null }),
         ...(status !== undefined && { status }),
       },
     });

@@ -1,7 +1,7 @@
 import { db } from '@/lib/db';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { ChefHat, ShieldCheck, Flame, Sparkles, BookOpen, Star } from 'lucide-react';
+import { ChefHat, ShieldCheck, Flame, Sparkles, BookOpen, Star, Clock, MapPin, Phone, Globe } from 'lucide-react';
 import type { Metadata } from 'next';
 import { getTheme } from '@/lib/theme-config';
 import FontLoader from '@/components/font-loader';
@@ -80,8 +80,15 @@ export default async function RestaurantWelcomePage({ params }: Props) {
     image: 'https://images.unsplash.com/photo-1645112411341-6c4fd023714a?q=80&w=500&fit=crop',
   };
 
+  const brandStyles = {
+    '--brand-primary': restaurant.primaryColor || style.accentHex,
+    '--brand-secondary': restaurant.secondaryColor || style.accentHex,
+    '--brand-accent': restaurant.accentColor || style.accentHex,
+    ...bodyStyle
+  } as React.CSSProperties;
+
   return (
-    <div className={`min-h-screen w-full overflow-x-hidden ${style.bg} ${style.text} flex flex-col justify-between max-w-[500px] mx-auto relative shadow-2xl pb-24`} style={bodyStyle}>
+    <div className={`min-h-screen w-full overflow-x-hidden ${style.bg} ${style.text} flex flex-col justify-between max-w-[500px] mx-auto relative shadow-2xl pb-24`} style={brandStyles}>
       <FontLoader headingFont={restaurant.fontHeading} bodyFont={restaurant.fontBody} />
       
       <div>
@@ -170,8 +177,8 @@ export default async function RestaurantWelcomePage({ params }: Props) {
                 </div>
                 <p className={`text-[10px] truncate mt-1 ${style.muted}`}>{todaySpecial.description}</p>
                 <div className="flex items-center gap-1 mt-1.5">
-                  <Star className={`w-3 h-3 fill-current ${style.accentText}`} />
-                  <span className={`text-[9px] font-bold uppercase tracking-wider ${style.accentText}`}>Popular</span>
+                  <Star className="w-3 h-3 fill-current" style={{ color: restaurant.primaryColor || style.accentHex }} />
+                  <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: restaurant.primaryColor || style.accentHex }}>Popular</span>
                 </div>
               </div>
             </div>
@@ -180,9 +187,82 @@ export default async function RestaurantWelcomePage({ params }: Props) {
               <div className={style.muted}>
                 <Star className="w-4 h-4" />
               </div>
-              <span className={`font-serif font-bold text-sm ${style.accentText}`}>{restaurant.currencySymbol}{todaySpecial.price.toFixed(2)}</span>
+              <span className="font-serif font-bold text-sm" style={{ color: restaurant.primaryColor || style.accentHex }}>
+                {restaurant.currencySymbol}{todaySpecial.price.toFixed(2)}
+              </span>
             </div>
           </Link>
+        </div>
+
+        {/* Restaurant Information Section (Locate Us, Hours, Phone) */}
+        <div className="px-4 mt-8 pb-8 space-y-4">
+          <h3 className="font-serif text-lg font-bold flex items-center gap-1.5" style={headingStyle}>
+            Restaurant Information
+          </h3>
+
+          <div className="grid grid-cols-1 gap-3">
+            {/* Opening Hours Card */}
+            <div className={`p-4 rounded-3xl border flex items-center gap-4 ${style.cardBg}`}>
+              <div className="p-3 bg-gray-500/5 rounded-2xl border border-gray-900/50">
+                <Clock className="w-5 h-5" style={{ color: restaurant.primaryColor || style.accentHex }} />
+              </div>
+              <div>
+                <span className="block text-[9px] uppercase font-bold tracking-widest text-gray-500">Opening Hours</span>
+                <span className="block text-sm font-semibold mt-0.5">{restaurant.openingHours || '11:00 AM - 11:00 PM'}</span>
+              </div>
+            </div>
+
+            {/* Locate Us Card */}
+            {restaurant.address && (
+              <div className={`p-4 rounded-3xl border flex flex-col gap-4 ${style.cardBg}`}>
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-gray-500/5 rounded-2xl border border-gray-900/50">
+                    <MapPin className="w-5 h-5" style={{ color: restaurant.primaryColor || style.accentHex }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="block text-[9px] uppercase font-bold tracking-widest text-gray-500">Address</span>
+                    <span className="block text-xs font-semibold mt-0.5 leading-relaxed truncate">{restaurant.address}</span>
+                  </div>
+                </div>
+
+                {restaurant.googleMapsUrl && (
+                  <a
+                    href={restaurant.googleMapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-3 rounded-2xl bg-gray-950 border border-gray-900 text-xs font-bold text-center text-gray-300 hover:text-white hover:border-[#D4A437]/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    style={{ borderColor: restaurant.primaryColor ? `${restaurant.primaryColor}33` : undefined }}
+                  >
+                    <MapPin className="w-3.5 h-3.5" style={{ color: restaurant.primaryColor || style.accentHex }} />
+                    📍 Locate Us
+                  </a>
+                )}
+              </div>
+            )}
+
+            {/* Contact Details Card (Phone & Website) */}
+            {(restaurant.phone || restaurant.website) && (
+              <div className={`p-4 rounded-3xl border grid grid-cols-2 gap-4 ${style.cardBg}`}>
+                {restaurant.phone && (
+                  <a href={`tel:${restaurant.phone}`} className="flex flex-col p-2 hover:bg-gray-500/5 rounded-xl transition-all">
+                    <span className="text-[9px] uppercase font-bold tracking-widest text-gray-500">Phone</span>
+                    <span className="text-xs font-semibold mt-0.5 text-white truncate">{restaurant.phone}</span>
+                  </a>
+                )}
+                {restaurant.website && (
+                  <a
+                    href={restaurant.website.startsWith('http') ? restaurant.website : `https://${restaurant.website}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col p-2 hover:bg-gray-500/5 rounded-xl transition-all"
+                  >
+                    <span className="text-[9px] uppercase font-bold tracking-widest text-gray-500">Website</span>
+                    <span className="text-xs font-semibold mt-0.5 truncate text-white hover:underline">{restaurant.website.replace(/https?:\/\/(www\.)?/, '')}</span>
+                  </a>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -191,6 +271,12 @@ export default async function RestaurantWelcomePage({ params }: Props) {
         <Link
           href={`/r/${slug}/menu`}
           className={`w-full py-4.5 rounded-full flex items-center justify-center gap-2.5 shadow-2xl transition-all duration-300 active:scale-[0.98] ${style.primaryBtn}`}
+          style={{
+            background: restaurant.primaryColor
+              ? `linear-gradient(135deg, ${restaurant.primaryColor} 0%, ${restaurant.secondaryColor || restaurant.primaryColor} 100%)`
+              : undefined,
+            color: restaurant.primaryColor ? '#000000' : undefined
+          }}
         >
           <BookOpen className="w-5 h-5 shrink-0" />
           <span className="text-xs font-bold tracking-widest uppercase">View Full Menu</span>

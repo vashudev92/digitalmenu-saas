@@ -465,82 +465,18 @@ export default function MenuProfilesPage() {
                   Theme
                   <span className="text-gray-600 normal-case tracking-normal font-normal ml-1">(optional)</span>
                 </label>
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)}
-                    className="w-full flex items-center justify-between bg-[#0d0d0d] border border-gray-800 focus:border-[#D4A437] focus:ring-1 focus:ring-[#D4A437] rounded-xl px-4 py-3.5 text-sm text-left focus:outline-none transition-all cursor-pointer"
-                  >
-                    {selectedThemeInfo ? (
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1">
-                          <div
-                            className="w-3 h-3 rounded-full border border-gray-700"
-                            style={{ backgroundColor: selectedThemeInfo.previewBg }}
-                          />
-                          <div
-                            className="w-3 h-3 rounded-full border border-gray-700"
-                            style={{ backgroundColor: selectedThemeInfo.previewAccent }}
-                          />
-                        </div>
-                        <span className="text-white">{selectedThemeInfo.name}</span>
-                      </div>
-                    ) : (
-                      <span className="text-gray-500">Choose a theme...</span>
-                    )}
-                    <ChevronDown
-                      className={`w-4 h-4 text-gray-500 transition-transform ${
-                        isThemeDropdownOpen ? 'rotate-180' : ''
-                      }`}
-                    />
-                  </button>
-
-                  {isThemeDropdownOpen && (
-                    <div className="absolute z-50 mt-2 w-full max-h-64 overflow-y-auto bg-[#0d0d0d] border border-gray-800 rounded-xl shadow-2xl shadow-black/60">
-                      {/* No theme option */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setFormTheme('');
-                          setIsThemeDropdownOpen(false);
-                        }}
-                        className="w-full text-left px-4 py-3 text-sm text-gray-400 hover:bg-gray-900 hover:text-white transition-colors cursor-pointer border-b border-gray-900"
-                      >
-                        No theme (use default)
-                      </button>
-                      {THEME_LIST.map((theme) => (
-                        <button
-                          key={theme.key}
-                          type="button"
-                          onClick={() => {
-                            setFormTheme(theme.key);
-                            setIsThemeDropdownOpen(false);
-                          }}
-                          className={`w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-gray-900 transition-colors cursor-pointer ${
-                            formTheme === theme.key
-                              ? 'bg-[#D4A437]/5 border-l-2 border-[#D4A437]'
-                              : 'border-l-2 border-transparent'
-                          }`}
-                        >
-                          <div className="flex items-center gap-1 shrink-0">
-                            <div
-                              className="w-3 h-3 rounded-full border border-gray-700"
-                              style={{ backgroundColor: theme.previewBg }}
-                            />
-                            <div
-                              className="w-3 h-3 rounded-full border border-gray-700"
-                              style={{ backgroundColor: theme.previewAccent }}
-                            />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-sm text-white truncate">{theme.name}</p>
-                            <p className="text-[10px] text-gray-600 truncate">{theme.description}</p>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <select
+                  value={formTheme}
+                  onChange={(e) => setFormTheme(e.target.value)}
+                  className="w-full bg-[#0d0d0d] border border-gray-800 focus:border-[#D4A437] focus:ring-1 focus:ring-[#D4A437] rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none transition-all cursor-pointer"
+                >
+                  <option value="">No theme (use default)</option>
+                  {THEME_LIST.map((theme) => (
+                    <option key={theme.key} value={theme.key} className="bg-black text-white">
+                      {theme.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Submit */}

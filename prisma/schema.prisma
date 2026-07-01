@@ -51,6 +51,7 @@ model Restaurant {
   secondaryColor String?        // Custom secondary hex color
   accentColor    String?        // Custom accent hex color
   favicon        String?        // URL to favicon image
+  openingHours   String?        @default("11:00 AM - 11:00 PM")
   bannerTitle1   String?        @default("Good Food")
   bannerTitle2   String?        @default("Great Mood")
   bannerSubtitle String?        @default("Discover our chef's special selection just for you.")
@@ -84,6 +85,7 @@ model MenuProfile {
   fontBody       String?
   bannerImage    String?     // Profile-specific banner
   logoOverride   String?     // Optional logo override
+  openingHours   String?     // Profile-specific hours
   status         Boolean     @default(true)
   restaurantId   String
   restaurant     Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)

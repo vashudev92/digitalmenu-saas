@@ -43,6 +43,7 @@ export default function EditMenuProfilePage() {
   const [fontBody, setFontBody] = useState('');
   const [bannerImage, setBannerImage] = useState('');
   const [logoOverride, setLogoOverride] = useState('');
+  const [openingHours, setOpeningHours] = useState('');
   const [status, setStatus] = useState(true);
   
   // Restaurant info (for preview and default QR)
@@ -72,6 +73,7 @@ export default function EditMenuProfilePage() {
       setFontBody(profile.fontBody || '');
       setBannerImage(profile.bannerImage || '');
       setLogoOverride(profile.logoOverride || '');
+      setOpeningHours(profile.openingHours || '');
       setStatus(profile.status);
       
       // Load restaurant details
@@ -119,6 +121,7 @@ export default function EditMenuProfilePage() {
           fontBody: fontBody || null,
           bannerImage: bannerImage || null,
           logoOverride: logoOverride || null,
+          openingHours: openingHours || null,
           status,
         }),
       });
@@ -279,6 +282,19 @@ export default function EditMenuProfilePage() {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Describe this dining area or special menu layout..."
               className="w-full bg-[#0d0d0d] border border-gray-800 focus:border-[#D4A437] focus:ring-1 focus:ring-[#D4A437] rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none transition-all resize-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+              Opening Hours Override (e.g. 7:00 PM - 11:00 PM)
+            </label>
+            <input
+              type="text"
+              value={openingHours}
+              onChange={(e) => setOpeningHours(e.target.value)}
+              placeholder="Leave blank to inherit restaurant opening hours..."
+              className="w-full bg-[#0d0d0d] border border-gray-800 focus:border-[#D4A437] focus:ring-1 focus:ring-[#D4A437] rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none transition-all"
             />
           </div>
 

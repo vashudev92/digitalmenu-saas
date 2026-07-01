@@ -112,6 +112,10 @@ export default async function ProfileMenuPage({ params }: Props) {
   const resolvedFontHeading = profile.fontHeading || restaurant.fontHeading;
   const resolvedFontBody = profile.fontBody || restaurant.fontBody;
   const resolvedLogo = profile.logoOverride || restaurant.logo;
+  const resolvedPrimaryColor = profile.primaryColor || restaurant.primaryColor;
+  const resolvedSecondaryColor = profile.secondaryColor || restaurant.secondaryColor;
+  const resolvedAccentColor = profile.accentColor || restaurant.accentColor;
+  const resolvedOpeningHours = profile.openingHours || restaurant.openingHours;
 
   return (
     <MenuClientView
@@ -122,6 +126,11 @@ export default async function ProfileMenuPage({ params }: Props) {
       currencySymbol={restaurant.currencySymbol}
       fontHeading={resolvedFontHeading}
       fontBody={resolvedFontBody}
+      primaryColor={resolvedPrimaryColor}
+      secondaryColor={resolvedSecondaryColor}
+      accentColor={resolvedAccentColor}
+      favicon={restaurant.favicon}
+      openingHours={resolvedOpeningHours}
       categories={activeCategories.map((c) => ({ id: c.id, name: c.name, icon: c.icon }))}
       menuItems={menuItems.map((item) => ({
         id: item.id,
