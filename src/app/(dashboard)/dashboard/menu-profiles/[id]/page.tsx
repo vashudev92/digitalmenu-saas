@@ -44,6 +44,7 @@ export default function EditMenuProfilePage() {
   const [bannerImage, setBannerImage] = useState('');
   const [logoOverride, setLogoOverride] = useState('');
   const [openingHours, setOpeningHours] = useState('');
+  const [planName, setPlanName] = useState('Free');
   const [status, setStatus] = useState(true);
   
   // Restaurant info (for preview and default QR)
@@ -81,6 +82,7 @@ export default function EditMenuProfilePage() {
       if (profileRes.ok) {
         const rData = await profileRes.json();
         setRestaurantSlug(rData.slug);
+        setPlanName(rData.subscription?.plan?.name || 'Free');
       }
 
       if (profile.qrCode) {
@@ -331,12 +333,21 @@ export default function EditMenuProfilePage() {
               onChange={(e) => setTheme(e.target.value)}
               className="w-full bg-[#0d0d0d] border border-gray-800 focus:border-[#D4A437] focus:ring-1 focus:ring-[#D4A437] rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none transition-all"
             >
-              <option value="">Inherit Default Restaurant Theme</option>
-              {THEME_LIST.map((t) => (
-                <option key={t.key} value={t.key}>
-                  {t.name}
-                </option>
-              ))}
+              <option value="" className="bg-black text-white">Inherit Default Restaurant Theme</option>
+              {THEME_LIST.map((t) => {
+                const normPlan = planName.toLowerCase();
+                let isAllowed = true;
+                if (normPlan === 'free' || normPlan === 'starter') {
+                  isAllowed = t.key === 'LUXURY_DARK' || t.key === 'MINIMAL_JAPANESE';
+                } else if (normPlan === 'premium' || normPlan === 'professional') {
+                  isAllowed = t.key === 'LUXURY_DARK' || t.key === 'MINIMAL_JAPANESE' || t.key === 'MODERN_CAFE' || t.key === 'ITALIAN_BISTRO';
+                }
+                return (
+                  <option key={t.key} value={t.key} disabled={!isAllowed} className="bg-black text-white">
+                    {t.name} {!isAllowed ? '🔒 (Upgrade required)' : ''}
+                  </option>
+                );
+              })}
             </select>
           </div>
 

@@ -2,7 +2,7 @@
 
 import { useSession } from 'next-auth/react';
 import { useState, useEffect, useCallback } from 'react';
-import { Store, Link as LinkIcon, Phone, MapPin, Globe, Loader2, Save, FileText, CheckCircle, Image, Palette, Type, Pipette } from 'lucide-react';
+import { Store, Link as LinkIcon, Phone, MapPin, Globe, Loader2, Save, FileText, CheckCircle, Image, Palette, Type, Pipette, Lock } from 'lucide-react';
 import ImageCropper from '@/components/image-cropper';
 import { THEME_LIST, FONT_OPTIONS, COLOR_PRESETS } from '@/lib/theme-config';
 
@@ -29,6 +29,7 @@ export default function ProfilePage() {
   const [theme, setTheme] = useState<string>('LUXURY_DARK');
   const [currencySymbol, setCurrencySymbol] = useState('₹');
   const [openingHours, setOpeningHours] = useState('11:00 AM - 11:00 PM');
+  const [planName, setPlanName] = useState('Free');
 
   // Typography states
   const [fontHeading, setFontHeading] = useState('Playfair Display');
@@ -94,6 +95,7 @@ export default function ProfilePage() {
         setTheme(data.theme || 'LUXURY_DARK');
         setCurrencySymbol(data.currencySymbol || '₹');
         setOpeningHours(data.openingHours || '11:00 AM - 11:00 PM');
+        setPlanName(data.subscription?.plan?.name || 'Free');
 
         // Typography
         setFontHeading(data.fontHeading || 'Playfair Display');
@@ -457,21 +459,44 @@ export default function ProfilePage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {THEME_LIST.map((t) => {
               const isSelected = theme === t.key;
+              
+              // Subscription check
+              const normPlan = planName.toLowerCase();
+              let isAllowed = true;
+              if (normPlan === 'free' || normPlan === 'starter') {
+                isAllowed = t.key === 'LUXURY_DARK' || t.key === 'MINIMAL_JAPANESE';
+              } else if (normPlan === 'premium' || normPlan === 'professional') {
+                isAllowed = t.key === 'LUXURY_DARK' || t.key === 'MINIMAL_JAPANESE' || t.key === 'MODERN_CAFE' || t.key === 'ITALIAN_BISTRO';
+              }
+
               return (
                 <div
                   key={t.key}
-                  onClick={() => setTheme(t.key)}
+                  onClick={() => {
+                    if (isAllowed) {
+                      setTheme(t.key);
+                    } else {
+                      alert(`The "${t.name}" theme is a premium feature not included in your ${planName} plan. Please upgrade your subscription to unlock this experience!`);
+                    }
+                  }}
                   className={`relative p-4 rounded-2xl cursor-pointer border-2 transition-all group ${
                     isSelected
                       ? 'border-[#D4A437] shadow-[0_0_20px_rgba(212,164,55,0.15)]'
-                      : 'border-transparent hover:border-gray-700 opacity-65 hover:opacity-100'
-                  }`}
+                      : 'border-transparent hover:border-gray-700'
+                  } ${!isAllowed ? 'opacity-40 hover:opacity-50' : 'opacity-85 hover:opacity-100'}`}
                   style={{ backgroundColor: t.previewBg }}
                 >
                   {/* Selected indicator */}
                   {isSelected && (
-                    <div className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full bg-[#D4A437] flex items-center justify-center">
+                    <div className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full bg-[#D4A437] flex items-center justify-center z-10">
                       <CheckCircle className="w-3.5 h-3.5 text-black" />
+                    </div>
+                  )}
+
+                  {/* Locked indicator */}
+                  {!isAllowed && (
+                    <div className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full bg-black/60 border border-gray-800 flex items-center justify-center z-10" title="Premium Theme Locked">
+                      <Lock className="w-3 h-3 text-[#D4A437]" />
                     </div>
                   )}
 

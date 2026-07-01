@@ -61,6 +61,7 @@ export default function MenuProfilesPage() {
   const [formDescription, setFormDescription] = useState('');
   const [formTheme, setFormTheme] = useState('');
   const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
+  const [planName, setPlanName] = useState('Free');
 
   // Delete confirmation state
   const [deleteTarget, setDeleteTarget] = useState<MenuProfile | null>(null);
@@ -72,6 +73,13 @@ export default function MenuProfilesPage() {
       if (!res.ok) throw new Error('Failed to load profiles');
       const data = await res.json();
       setProfiles(data.profiles || []);
+
+      // Get subscription plan
+      const profileRes = await fetch('/api/profile');
+      if (profileRes.ok) {
+        const rData = await profileRes.json();
+        setPlanName(rData.subscription?.plan?.name || 'Free');
+      }
     } catch {
       setError('Could not load menu profiles.');
     } finally {
@@ -471,11 +479,20 @@ export default function MenuProfilesPage() {
                   className="w-full bg-[#0d0d0d] border border-gray-800 focus:border-[#D4A437] focus:ring-1 focus:ring-[#D4A437] rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none transition-all cursor-pointer"
                 >
                   <option value="">No theme (use default)</option>
-                  {THEME_LIST.map((theme) => (
-                    <option key={theme.key} value={theme.key} className="bg-black text-white">
-                      {theme.name}
-                    </option>
-                  ))}
+                  {THEME_LIST.map((theme) => {
+                    const normPlan = planName.toLowerCase();
+                    let isAllowed = true;
+                    if (normPlan === 'free' || normPlan === 'starter') {
+                      isAllowed = theme.key === 'LUXURY_DARK' || theme.key === 'MINIMAL_JAPANESE';
+                    } else if (normPlan === 'premium' || normPlan === 'professional') {
+                      isAllowed = theme.key === 'LUXURY_DARK' || theme.key === 'MINIMAL_JAPANESE' || theme.key === 'MODERN_CAFE' || theme.key === 'ITALIAN_BISTRO';
+                    }
+                    return (
+                      <option key={theme.key} value={theme.key} disabled={!isAllowed} className="bg-black text-white">
+                        {theme.name} {!isAllowed ? '🔒 (Upgrade required)' : ''}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
 

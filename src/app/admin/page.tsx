@@ -158,6 +158,12 @@ export default function AdminPage() {
 
         <div className="flex items-center gap-4">
           <Link
+            href="/admin/themes"
+            className="text-xs text-[#D4A437] hover:text-white border border-[#D4A437]/20 hover:border-[#D4A437]/60 px-4 py-2.5 rounded-full transition-all bg-[#D4A437]/5 font-semibold"
+          >
+            Theme Library
+          </Link>
+          <Link
             href="/dashboard"
             className="text-xs text-gray-400 hover:text-white border border-gray-800 hover:border-gray-700 px-4 py-2.5 rounded-full transition-all"
           >

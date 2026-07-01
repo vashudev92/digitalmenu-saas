@@ -24,7 +24,8 @@ import {
   Globe,
   X,
   ChevronDown,
-  Clock
+  Clock,
+  Compass
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -67,14 +68,14 @@ interface Props {
 }
 
 const iconMap: { [key: string]: React.ReactNode } = {
-  Sparkles: <Star className="w-4 h-4 shrink-0 fill-current" />,
-  Soup: <Soup className="w-4 h-4 shrink-0" />,
-  UtensilsCrossed: <UtensilsCrossed className="w-4 h-4 shrink-0" />,
-  IceCream: <IceCream className="w-4 h-4 shrink-0" />,
-  Wine: <Wine className="w-4 h-4 shrink-0" />,
-  Pizza: <Pizza className="w-4 h-4 shrink-0" />,
-  Coffee: <Coffee className="w-4 h-4 shrink-0" />,
-  Utensils: <Utensils className="w-4 h-4 shrink-0" />,
+  Sparkles: <Star className="w-3.5 h-3.5 shrink-0 fill-current" />,
+  Soup: <Soup className="w-3.5 h-3.5 shrink-0" />,
+  UtensilsCrossed: <UtensilsCrossed className="w-3.5 h-3.5 shrink-0" />,
+  IceCream: <IceCream className="w-3.5 h-3.5 shrink-0" />,
+  Wine: <Wine className="w-3.5 h-3.5 shrink-0" />,
+  Pizza: <Pizza className="w-3.5 h-3.5 shrink-0" />,
+  Coffee: <Coffee className="w-3.5 h-3.5 shrink-0" />,
+  Utensils: <Utensils className="w-3.5 h-3.5 shrink-0" />,
 };
 
 export default function MenuClientView({
@@ -123,7 +124,7 @@ export default function MenuClientView({
     '--brand-secondary': secondaryColor || style.accentHex,
     '--brand-accent': accentColor || style.accentHex,
     ...(fontBody ? { fontFamily: `'${fontBody}', sans-serif` } : {}),
-  } as React.CSSProperties;
+  } as unknown as React.CSSProperties;
 
   const headingStyle = fontHeading ? { fontFamily: `'${fontHeading}', serif` } : {};
   const bodyStyle = fontBody ? { fontFamily: `'${fontBody}', sans-serif` } : {};
@@ -144,13 +145,22 @@ export default function MenuClientView({
     return getFilteredItems(catId).length > 0;
   };
 
-  // Helper: Get active tab colors dynamically skined by brand primary color
+  // Helper: Get active tab colors dynamically skinned by brand primary color
   const getTabStyles = (isActive: boolean) => {
     if (!isActive) return {};
+    
+    // Custom logic depending on layoutMode
+    if (style.layoutMode === 'japanese') {
+      return {
+        borderBottom: `2px solid ${primaryColor || style.accentHex}`,
+        color: primaryColor || style.accentHex,
+      };
+    }
+    
     return {
       backgroundColor: primaryColor || style.accentHex,
       borderColor: primaryColor || style.accentHex,
-      color: '#000000',
+      color: style.layoutMode === 'indian' ? '#000000' : '#ffffff',
     };
   };
 
@@ -175,11 +185,24 @@ export default function MenuClientView({
             
             <div className="flex flex-col items-center">
               {logoUrl ? (
-                <img src={logoUrl} alt="Logo" className="w-6 h-6 rounded-full object-cover mb-1 border border-gray-800" />
+                <img 
+                  src={logoUrl} 
+                  alt="Logo" 
+                  className={`w-6 h-6 object-cover mb-1 border border-gray-800/40 ${
+                    style.layoutMode === 'cafe' ? 'rounded-2xl' : 
+                    style.layoutMode === 'japanese' ? 'rounded-none' : 'rounded-full'
+                  }`} 
+                />
               ) : (
                 <ChefHat className="w-5 h-5 mb-0.5" style={{ color: primaryColor || style.accentHex }} />
               )}
-              <span className="font-serif font-bold text-sm tracking-wide uppercase" style={headingStyle}>
+              <span 
+                className={`font-bold tracking-wide uppercase ${
+                  style.layoutMode === 'luxury' ? 'font-serif text-xs tracking-widest text-[#D4A437]' :
+                  style.layoutMode === 'japanese' ? 'font-mono text-xs tracking-wider' : 'text-xs'
+                }`}
+                style={headingStyle}
+              >
                 {restaurantName}
               </span>
             </div>
@@ -203,24 +226,32 @@ export default function MenuClientView({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search dishes..."
-                className={`w-full rounded-xl pl-10 pr-4 py-3 text-xs focus:outline-none transition-all ${style.inputBg} ${style.text} border focus:border-opacity-50`}
+                className={`w-full pl-10 pr-4 py-3 text-xs focus:outline-none transition-all ${style.inputBg} ${style.text} border focus:border-opacity-60 ${
+                  style.layoutMode === 'cafe' ? 'rounded-full' :
+                  style.layoutMode === 'japanese' ? 'rounded-none border-black' : 'rounded-xl'
+                }`}
                 style={{ borderColor: primaryColor ? `${primaryColor}33` : undefined }}
               />
             </div>
           </div>
 
-          {/* Category Horizontal scroll list */}
+          {/* Category Navigation Bar */}
           <div className="border-t border-gray-950/10 bg-inherit">
-            <div className="overflow-x-auto flex flex-row whitespace-nowrap scrollbar-none gap-3 px-4 py-3.5 scroll-smooth [touch-action:pan-x]">
+            <div className="overflow-x-auto flex flex-row whitespace-nowrap scrollbar-none gap-2 px-4 py-3 scroll-smooth [touch-action:pan-x]">
               <button
                 type="button"
                 onClick={() => setActiveCategory('ALL')}
                 style={getTabStyles(activeCategory === 'ALL')}
-                className={`px-5 py-3 rounded-2xl border text-xs font-bold tracking-wider uppercase flex items-center gap-1.5 shrink-0 [touch-action:manipulation] cursor-pointer ${
-                  activeCategory === 'ALL' ? 'shadow-md' : style.catInactive
+                className={`px-4.5 py-2.5 text-xs font-bold uppercase flex items-center gap-1.5 shrink-0 [touch-action:manipulation] transition-all cursor-pointer ${
+                  activeCategory === 'ALL'
+                    ? 'shadow-md border'
+                    : `${style.catInactive} border`
+                } ${
+                  style.layoutMode === 'cafe' ? 'rounded-full' :
+                  style.layoutMode === 'japanese' ? 'rounded-none border-transparent hover:border-black/10' : 'rounded-xl'
                 }`}
               >
-                <Star className="w-4 h-4 shrink-0 fill-current" />
+                <Star className="w-3.5 h-3.5 shrink-0 fill-current" />
                 <span>All Menu</span>
               </button>
 
@@ -232,14 +263,19 @@ export default function MenuClientView({
                     type="button"
                     onClick={() => setActiveCategory(cat.id)}
                     style={getTabStyles(isCatActive)}
-                    className={`px-5 py-3 rounded-2xl border text-xs font-bold tracking-wider uppercase flex items-center gap-1.5 shrink-0 [touch-action:manipulation] cursor-pointer ${
-                      isCatActive ? 'shadow-md' : style.catInactive
+                    className={`px-4.5 py-2.5 text-xs font-bold uppercase flex items-center gap-1.5 shrink-0 [touch-action:manipulation] transition-all cursor-pointer ${
+                      isCatActive
+                        ? 'shadow-md border'
+                        : `${style.catInactive} border`
+                    } ${
+                      style.layoutMode === 'cafe' ? 'rounded-full' :
+                      style.layoutMode === 'japanese' ? 'rounded-none border-transparent hover:border-black/10' : 'rounded-xl'
                     }`}
                   >
                     <span className="shrink-0">
-                      {iconMap[cat.icon] || <Utensils className="w-4 h-4" />}
+                      {iconMap[cat.icon] || <Utensils className="w-3.5 h-3.5" />}
                     </span>
-                    <span>{cat.name}</span>
+                    <span>{cat.name.replace(/^(Main|Poolside|Rooftop|Lounge)\s+/, '')}</span>
                   </button>
                 );
               })}
@@ -247,9 +283,9 @@ export default function MenuClientView({
           </div>
         </div>
 
-        {/* Veg-Only filters & counts header */}
+        {/* Veg-Only and Results Info */}
         <div className="px-4 pb-2 pt-3 flex items-center justify-between">
-          <span className={`text-[9px] uppercase font-bold tracking-widest ${style.muted}`}>
+          <span className={`text-[8px] uppercase font-bold tracking-widest ${style.muted}`}>
             Dishes Available
           </span>
           
@@ -272,7 +308,7 @@ export default function MenuClientView({
           </button>
         </div>
 
-        {/* Dynamic Theme layout renderers */}
+        {/* Categories / Dishes Loop */}
         <div className="px-4 py-2 space-y-8">
           {categories
             .filter((cat) => activeCategory === 'ALL' || activeCategory === cat.id)
@@ -282,55 +318,64 @@ export default function MenuClientView({
 
               return (
                 <div key={cat.id} className="space-y-4">
-                  {/* Category Title bar */}
-                  <div className={`flex items-center justify-between border-b ${style.divider} pb-2`}>
-                    <h3 className="font-serif text-lg font-bold tracking-wide" style={headingStyle}>
-                      {cat.name}
-                      <span className={`text-xs ml-2 font-serif italic ${style.muted}`}>
-                        • {itemsInCat.length} items
+                  {/* Category Title Header */}
+                  <div className={`flex items-center justify-between border-b ${style.divider} pb-1.5`}>
+                    <h3 
+                      className={`text-base font-bold tracking-wide ${
+                        style.layoutMode === 'luxury' ? 'font-serif text-[#D4A437] uppercase tracking-widest' :
+                        style.layoutMode === 'japanese' ? 'font-mono text-black uppercase tracking-wider' : ''
+                      }`} 
+                      style={headingStyle}
+                    >
+                      {cat.name.replace(/^(Main|Poolside|Rooftop|Lounge)\s+/, '')}
+                      <span className={`text-[10px] ml-2 font-normal font-sans tracking-normal ${style.muted}`}>
+                        ({itemsInCat.length} items)
                       </span>
                     </h3>
                   </div>
 
-                  {/* Rendering conditional based on layoutMode */}
+                  {/* Themes-specific Visual Layout Engine */}
                   
-                  {/* ====== 1. MODERN CAFE / CONTEMPORARY (2-Column Visual Grid) ====== */}
-                  {(style.layoutMode === 'modern' || style.layoutMode === 'contemporary') ? (
+                  {/* ====== 1. MODERN CAFE / BEACH RESTAURANT (Card Grid Layout) ====== */}
+                  {(style.layoutMode === 'cafe' || style.layoutMode === 'beach') ? (
                     <div className="grid grid-cols-2 gap-4">
                       {itemsInCat.map((item) => (
                         <div
                           key={item.id}
-                          className={`flex flex-col overflow-hidden border transition-all hover:shadow-md ${style.cardBg} ${style.cardRadius}`}
-                          style={{ borderColor: primaryColor ? `${primaryColor}22` : undefined }}
+                          className={`flex flex-col overflow-hidden border transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 ${style.cardBg} ${style.cardRadius}`}
+                          style={{ borderColor: primaryColor ? `${primaryColor}15` : undefined }}
                         >
+                          {/* Image is the Hero */}
                           <div className="aspect-[4/3] w-full bg-gray-950 overflow-hidden relative shrink-0">
                             {item.image ? (
-                              <img src={item.image} alt={item.name} className="object-cover w-full h-full" />
+                              <img src={item.image} alt={item.name} className="object-cover w-full h-full group-hover:scale-105 transition-transform" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center bg-gray-900">
-                                <ChefHat className="w-6 h-6 text-gray-700" />
+                                <ChefHat className="w-5 h-5 text-gray-700" />
                               </div>
                             )}
+                            
+                            {/* Chef Pick Tag */}
                             {item.isFeatured && (
                               <span
                                 className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[8px] font-bold text-black"
                                 style={{ backgroundColor: primaryColor || style.accentHex }}
                               >
-                                Chef Pick
+                                Featured
                               </span>
                             )}
+
+                            {/* Veg indicator */}
+                            <span className={`absolute top-2 right-2 w-4.5 h-4.5 bg-black/60 backdrop-blur-md rounded-full flex items-center justify-center border ${
+                              item.isVeg ? 'border-green-500' : 'border-red-500'
+                            }`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${item.isVeg ? 'bg-green-500' : 'bg-red-500'}`} />
+                            </span>
                           </div>
                           
-                          <div className="p-3 flex-1 flex flex-col justify-between space-y-2">
+                          <div className="p-3 flex-1 flex flex-col justify-between gap-2.5">
                             <div>
-                              <div className="flex items-center gap-1.5">
-                                <h4 className="font-bold text-xs truncate leading-tight flex-1">{item.name}</h4>
-                                <span className={`w-2.5 h-2.5 border flex items-center justify-center rounded shrink-0 ${
-                                  item.isVeg ? 'border-green-600' : 'border-red-600'
-                                }`}>
-                                  <span className={`w-1 h-1 rounded-full ${item.isVeg ? 'bg-green-600' : 'bg-red-600'}`} />
-                                </span>
-                              </div>
+                              <h4 className="font-bold text-xs truncate leading-tight">{item.name}</h4>
                               <p className={`text-[9px] leading-relaxed mt-1 line-clamp-2 ${style.muted}`}>
                                 {item.description}
                               </p>
@@ -344,60 +389,57 @@ export default function MenuClientView({
                       ))}
                     </div>
                   ) : style.layoutMode === 'japanese' ? (
-                    // ====== 2. MINIMAL JAPANESE (Zen borderless list) ======
-                    <div className="divide-y divide-gray-200/10">
+                    // ====== 2. JAPANESE MINIMAL (Stark Zen list) ======
+                    <div className="divide-y divide-black/10">
                       {itemsInCat.map((item) => (
                         <div
                           key={item.id}
                           className="py-4 flex gap-4 items-center justify-between bg-transparent border-none"
                         >
                           <div className="flex gap-4 items-center overflow-hidden flex-1">
-                            <div className="w-14 h-14 bg-gray-950 overflow-hidden shrink-0 flex items-center justify-center border border-gray-900/50">
+                            <div className="w-14 h-14 bg-gray-950 overflow-hidden shrink-0 flex items-center justify-center border border-black rounded-none">
                               {item.image ? (
-                                <img src={item.image} alt={item.name} className="object-cover w-full h-full" />
+                                <img src={item.image} alt={item.name} className="object-cover w-full h-full grayscale hover:grayscale-0 transition-all duration-300" />
                               ) : (
-                                <ChefHat className={`w-4 h-4 ${style.muted}`} />
+                                <ChefHat className="w-4 h-4 text-gray-500" />
                               )}
                             </div>
                             
                             <div className="overflow-hidden flex-1">
                               <div className="flex items-center gap-2">
-                                <h4 className="font-medium text-xs tracking-wider uppercase truncate">{item.name}</h4>
+                                <h4 className="font-mono text-xs uppercase font-black tracking-wider truncate">{item.name}</h4>
                                 <span className={`w-2.5 h-2.5 border flex items-center justify-center rounded shrink-0 ${
                                   item.isVeg ? 'border-green-600' : 'border-red-600'
                                 }`}>
                                   <span className={`w-1 h-1 rounded-full ${item.isVeg ? 'bg-green-600' : 'bg-red-600'}`} />
                                 </span>
                               </div>
-                              <p className="text-[9px] leading-relaxed mt-0.5 line-clamp-1 opacity-50">
+                              <p className="text-[9px] leading-relaxed mt-0.5 line-clamp-1 opacity-60">
                                 {item.description}
                               </p>
-                              {item.isFeatured && (
-                                <span className="text-[8px] font-bold uppercase tracking-widest mt-1 block opacity-75" style={{ color: primaryColor || style.accentHex }}>
-                                  SPECIAL
-                                </span>
-                              )}
                             </div>
                           </div>
 
-                          <span className="font-mono text-xs font-bold tracking-widest pl-3" style={{ color: primaryColor || style.accentHex }}>
+                          <span className="font-mono text-xs font-bold tracking-widest pl-3 shrink-0" style={{ color: primaryColor || style.accentHex }}>
                             {currencySymbol}{item.price.toFixed(2)}
                           </span>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    // ====== 3. LUXURY / ELEGANT / BISTRO / INDIAN (Classic List card layout) ======
+                    // ====== 3. LUXURY / BISTRO / INDIAN (Classic Premium List Card Layout) ======
                     <div className="space-y-3.5">
                       {itemsInCat.map((item) => (
                         <div
                           key={item.id}
-                          className={`p-4 border flex gap-4 items-center justify-between transition-all hover:border-opacity-40 ${style.cardBg} ${style.cardRadius}`}
+                          className={`p-4 border flex gap-4 items-center justify-between transition-all duration-300 ${style.cardBg} ${style.cardRadius}`}
                           style={{ borderColor: primaryColor ? `${primaryColor}22` : undefined }}
                         >
-                          {/* Left: Image & Details */}
+                          {/* Image is Hero */}
                           <div className="flex gap-3.5 items-center overflow-hidden flex-1">
-                            <div className="w-18 h-18 bg-gray-950 overflow-hidden shrink-0 flex items-center justify-center border border-gray-900/50 rounded-xl">
+                            <div className={`w-18 h-18 bg-gray-950 overflow-hidden shrink-0 flex items-center justify-center border border-gray-900/50 ${
+                              style.layoutMode === 'bistro' ? 'rounded-2xl' : 'rounded-xl'
+                            }`}>
                               {item.image ? (
                                 <img src={item.image} alt={item.name} className="object-cover w-full h-full" />
                               ) : (
@@ -407,11 +449,17 @@ export default function MenuClientView({
                             
                             <div className="overflow-hidden flex-1">
                               <div className="flex items-center gap-2">
-                                <h4 className="font-bold text-sm truncate leading-tight">{item.name}</h4>
-                                <span className={`w-3.5 h-3.5 border flex items-center justify-center rounded shrink-0 ${
+                                <h4 
+                                  className={`text-sm truncate leading-tight ${
+                                    style.layoutMode === 'luxury' ? 'font-serif font-bold text-white' : 'font-bold'
+                                  }`}
+                                >
+                                  {item.name}
+                                </h4>
+                                <span className={`w-3 h-3 border flex items-center justify-center rounded shrink-0 ${
                                   item.isVeg ? 'border-green-600' : 'border-red-600'
                                 }`}>
-                                  <span className={`w-1.5 h-1.5 rounded-full ${item.isVeg ? 'bg-green-600' : 'bg-red-600'}`} />
+                                  <span className={`w-1 h-1 rounded-full ${item.isVeg ? 'bg-green-600' : 'bg-red-600'}`} />
                                 </span>
                               </div>
                               <p className={`text-[10px] leading-relaxed mt-1 line-clamp-2 ${style.muted}`}>
@@ -420,18 +468,21 @@ export default function MenuClientView({
                               
                               {item.isFeatured && (
                                 <span
-                                  className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-bold mt-1.5 text-black`}
+                                  className="inline-flex items-center gap-0.5 mt-1.5 px-2 py-0.5 text-[8px] font-bold text-black uppercase tracking-wider rounded"
                                   style={{ backgroundColor: primaryColor || style.accentHex }}
                                 >
-                                  Chef Pick
+                                  Featured
                                 </span>
                               )}
                             </div>
                           </div>
 
-                          {/* Right: Actions / Price */}
+                          {/* Right side Price details */}
                           <div className="flex flex-col items-end justify-end h-14 shrink-0 pl-2">
-                            <span className="font-serif font-bold text-sm" style={{ color: primaryColor || style.accentHex }}>
+                            <span 
+                              className={`font-serif font-bold text-sm`} 
+                              style={{ color: primaryColor || style.accentHex }}
+                            >
                               {currencySymbol}{item.price.toFixed(2)}
                             </span>
                           </div>
@@ -443,23 +494,23 @@ export default function MenuClientView({
               );
             })}
 
-          {/* Empty state fallback */}
+          {/* Empty state fallback themed */}
           {categories.filter((cat) => activeCategory === 'ALL' || activeCategory === cat.id).every((cat) => !categoryHasItems(cat.id)) && (
             <div className="text-center py-16 text-gray-500">
-              <UtensilsCrossed className="w-12 h-12 mx-auto text-gray-700 mb-4" />
-              <p className="text-sm">No items found matching the current search parameters.</p>
+              <Compass className="w-10 h-10 mx-auto text-gray-700 mb-3 animate-spin" style={{ animationDuration: '3s' }} />
+              <p className="text-xs">No dishes found matching your current filters.</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Sticky Bottom Navigation Bar (Flavoro Style) */}
+      {/* Sticky Bottom Navigation Bar themed */}
       <nav className={`fixed bottom-0 left-0 right-0 mx-auto w-full max-w-[500px] z-40 backdrop-blur-md border-t px-6 py-4 flex items-center justify-between ${style.navBg}`}>
         <Link
           href={`/r/${restaurantSlug}`}
           className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white transition-colors [touch-action:manipulation]"
         >
-          <Home className="w-5 h-5" />
+          <Home className="w-4.5 h-4.5" />
           <span className="text-[9px] uppercase font-bold tracking-wider">Home</span>
         </Link>
 
@@ -468,7 +519,7 @@ export default function MenuClientView({
           className="flex flex-col items-center gap-1 transition-colors [touch-action:manipulation]"
           style={{ color: primaryColor || style.accentHex }}
         >
-          <BookOpen className="w-5 h-5 fill-current" />
+          <BookOpen className="w-4.5 h-4.5 fill-current" />
           <span className="text-[9px] uppercase font-bold tracking-wider">Menu</span>
         </Link>
 
@@ -477,15 +528,18 @@ export default function MenuClientView({
           onClick={() => setIsInfoOpen(true)}
           className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white transition-colors cursor-pointer [touch-action:manipulation]"
         >
-          <Info className="w-5 h-5" />
+          <Info className="w-4.5 h-4.5" />
           <span className="text-[9px] uppercase font-bold tracking-wider">Info</span>
         </button>
       </nav>
 
-      {/* INFO DRAWER / MODAL */}
+      {/* INFO DRAWER / MODAL themed */}
       {isInfoOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/80 backdrop-blur-sm no-print">
-          <div className={`w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-6 relative border ${style.cardBg} ${style.bg}`} style={{ backdropFilter: 'blur(20px)' }}>
+          <div 
+            className={`w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-6 relative border ${style.cardBg} ${style.bg}`} 
+            style={{ backdropFilter: 'blur(20px)' }}
+          >
             <button
               onClick={() => setIsInfoOpen(false)}
               className={`absolute top-5 right-5 p-1 rounded-lg ${style.muted} hover:opacity-80`}
@@ -493,7 +547,14 @@ export default function MenuClientView({
               <X className="w-5 h-5" />
             </button>
 
-            <h3 className="font-serif text-2xl font-bold mb-6 border-b pb-2" style={{ ...headingStyle, color: primaryColor || style.accentHex, borderColor: primaryColor ? `${primaryColor}22` : undefined }}>
+            <h3 
+              className="text-2xl font-bold mb-6 border-b pb-2" 
+              style={{ 
+                ...headingStyle, 
+                color: primaryColor || style.accentHex, 
+                borderColor: primaryColor ? `${primaryColor}22` : undefined 
+              }}
+            >
               Restaurant Info
             </h3>
 
@@ -554,7 +615,8 @@ export default function MenuClientView({
                 background: primaryColor
                   ? `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor || primaryColor} 100%)`
                   : undefined,
-                color: primaryColor ? '#000000' : undefined
+                color: primaryColor ? '#000000' : undefined,
+                borderRadius: style.layoutMode === 'cafe' ? '9999px' : style.layoutMode === 'japanese' ? '0px' : undefined
               }}
             >
               Close Info

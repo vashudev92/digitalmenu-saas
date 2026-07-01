@@ -167,5 +167,19 @@ model Subscription {
   startDate    DateTime           @default(now())
   endDate      DateTime
   createdAt    DateTime           @default(now())
-  updatedAt    DateTime       @updatedAt
+  updatedAt    DateTime           @updatedAt
+}
+
+model Theme {
+  id           String   @id @default(uuid())
+  key          String   @unique // e.g. "LUXURY_DARK", "MODERN_CAFE"
+  name         String
+  previewImage String?  @default("")
+  description  String?
+  version      String   @default("1.0.0")
+  tier         String   @default("STARTER") // STARTER | PROFESSIONAL | PREMIUM
+  monthlyCost  Float    @default(0.0)
+  status       String   @default("PUBLISHED") // PUBLISHED | DISABLED | ARCHIVED
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }

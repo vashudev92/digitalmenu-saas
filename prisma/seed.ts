@@ -432,6 +432,76 @@ async function main() {
   await prisma.restaurant.deleteMany();
   await prisma.user.deleteMany();
   await prisma.plan.deleteMany();
+  await prisma.theme.deleteMany();
+
+  // Create Platform Theme Library
+  const themesToSeed = [
+    {
+      key: 'LUXURY_DARK',
+      name: 'Luxury Fine Dining',
+      description: 'Gold highlights on deep black, elegant serif headings and thin double gold borders',
+      version: '1.0.0',
+      tier: 'STARTER',
+      monthlyCost: 0.0,
+      status: 'PUBLISHED',
+      previewImage: 'https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=600&fit=crop'
+    },
+    {
+      key: 'MINIMAL_JAPANESE',
+      name: 'Japanese Minimal',
+      description: 'Lots of whitespace, minimal layout, borderless simple cards, thin typography',
+      version: '1.0.0',
+      tier: 'STARTER',
+      monthlyCost: 0.0,
+      status: 'PUBLISHED',
+      previewImage: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?q=80&w=600&fit=crop'
+    },
+    {
+      key: 'MODERN_CAFE',
+      name: 'Modern Cafe',
+      description: 'Coffee colors, rounded cards, friendly typography, warm illustrations',
+      version: '1.0.0',
+      tier: 'PROFESSIONAL',
+      monthlyCost: 499.0,
+      status: 'PUBLISHED',
+      previewImage: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?q=80&w=600&fit=crop'
+    },
+    {
+      key: 'ITALIAN_BISTRO',
+      name: 'Italian Bistro',
+      description: 'Warm beige backdrop, deep wine red highlights, rustic card frames',
+      version: '1.0.0',
+      tier: 'PROFESSIONAL',
+      monthlyCost: 499.0,
+      status: 'PUBLISHED',
+      previewImage: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=600&fit=crop'
+    },
+    {
+      key: 'TRADITIONAL_INDIAN',
+      name: 'Traditional Indian',
+      description: 'Rich maroon backdrop, saffron gold highlights, decorative headings',
+      version: '1.0.0',
+      tier: 'PREMIUM',
+      monthlyCost: 999.0,
+      status: 'PUBLISHED',
+      previewImage: 'https://images.unsplash.com/photo-1585938338392-50a59970d8ee?q=80&w=600&fit=crop'
+    },
+    {
+      key: 'BEACH_RESTAURANT',
+      name: 'Beach Restaurant',
+      description: 'Ocean teal & sand colors, relaxed spacing, photo-first layouts',
+      version: '1.0.0',
+      tier: 'PREMIUM',
+      monthlyCost: 999.0,
+      status: 'PUBLISHED',
+      previewImage: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=600&fit=crop'
+    }
+  ];
+
+  for (const t of themesToSeed) {
+    await prisma.theme.create({ data: t });
+  }
+  console.log('Platform Theme Library seeded.');
 
   // Create Plans
   const freePlan = await prisma.plan.create({
@@ -624,7 +694,7 @@ async function main() {
     },
   });
 
-  // 4 Profiles: Main Restaurant, Pool Side Dining, Rooftop Dining, and Luxury Lounge.
+  // 5 Profiles: Main Restaurant, Pool Side Dining, Rooftop Dining, Garden Restaurant, and Executive Lounge
   const profilesConfigs = [
     {
       name: 'Main Restaurant',
@@ -644,10 +714,10 @@ async function main() {
       slug: 'poolside',
       prefix: 'Poolside',
       description: 'Relaxed breeze-brushed dining tables under canopies right next to the crystal pool.',
-      theme: 'ELEGANT_LIGHT',
-      primaryColor: '#0EA5E9',
-      secondaryColor: '#0369A1',
-      accentColor: '#7DD3FC',
+      theme: 'BEACH_RESTAURANT',
+      primaryColor: '#00897B',
+      secondaryColor: '#00695C',
+      accentColor: '#80CBC4',
       fontHeading: 'Lora',
       fontBody: 'Nunito',
       openingHours: '12:00 PM - 10:00 PM',
@@ -657,25 +727,38 @@ async function main() {
       slug: 'rooftop',
       prefix: 'Rooftop',
       description: 'Stellar skyline views, open skies, and glowing candlelit lounge tables.',
-      theme: 'CONTEMPORARY_REST',
-      primaryColor: '#F97316',
-      secondaryColor: '#C2410C',
-      accentColor: '#FDBA74',
+      theme: 'ITALIAN_BISTRO',
+      primaryColor: '#800020',
+      secondaryColor: '#600018',
+      accentColor: '#D4AF37',
       fontHeading: 'Montserrat',
       fontBody: 'Raleway',
       openingHours: '06:00 PM - 12:00 AM',
     },
     {
-      name: 'Luxury Lounge',
+      name: 'Garden Restaurant',
+      slug: 'garden',
+      prefix: 'Garden',
+      description: 'Cozy garden tables surrounded by blooming jasmines and warm hanging lamps.',
+      theme: 'MODERN_CAFE',
+      primaryColor: '#5D4037',
+      secondaryColor: '#4E342E',
+      accentColor: '#D7CCC8',
+      fontHeading: 'Poppins',
+      fontBody: 'Inter',
+      openingHours: '11:00 AM - 10:00 PM',
+    },
+    {
+      name: 'Executive Lounge',
       slug: 'lounge',
       prefix: 'Lounge',
-      description: 'Deep velvet seating, ambient warm lamps, and signature artisanal spirits.',
-      theme: 'DARK_PREMIUM',
-      primaryColor: '#8B5CF6',
-      secondaryColor: '#6D28D9',
-      accentColor: '#C4B5FD',
-      fontHeading: 'Playfair Display',
-      fontBody: 'Poppins',
+      description: 'Quiet, minimal Zen layout with low tables and premium green tea selections.',
+      theme: 'MINIMAL_JAPANESE',
+      primaryColor: '#1F1F24',
+      secondaryColor: '#2D2D35',
+      accentColor: '#E6E2D8',
+      fontHeading: 'Libre Baskerville',
+      fontBody: 'DM Sans',
       openingHours: '05:00 PM - 02:00 AM',
     },
   ];
