@@ -3,7 +3,20 @@ import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { db } from '@/lib/db';
 import Link from 'next/link';
-import { Layers, UtensilsCrossed, QrCode, ArrowUpRight, Plus, Download, Sparkles } from 'lucide-react';
+import { 
+  Layers, 
+  UtensilsCrossed, 
+  QrCode, 
+  ArrowUpRight, 
+  Plus, 
+  Download, 
+  Sparkles,
+  TrendingUp,
+  UserCheck
+} from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,104 +51,110 @@ export default async function DashboardPage() {
 
   const totalCategories = restaurant._count.categories;
   const totalMenuItems = restaurant._count.menuItems;
-  const qrStatus = restaurant.qrCodes.length > 0 ? 'Generated' : 'Not Generated';
+  const qrStatus = restaurant.qrCodes.length > 0 ? 'Active' : 'Missing';
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto">
-      {/* Welcome banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-[#D4A437]/15 to-[#D4A437]/5 border border-[#D4A437]/25 gap-4">
+    <div className="space-y-8 max-w-5xl mx-auto text-left">
+      {/* Welcome Banner */}
+      <Card className="p-6 sm:p-8 bg-gradient-to-br from-[#D4A853]/10 to-transparent border-white/[0.04] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-serif text-3xl font-bold">Welcome to {restaurant.name}</h1>
-          <p className="text-sm text-gray-400 mt-1">Manage your menu card, design QR code displays, and review subscriptions.</p>
+          <h1 className="font-serif text-2xl sm:text-3xl font-bold text-white">Welcome back, {restaurant.name}</h1>
+          <p className="text-xs text-gray-400 mt-1">Design menu layout schemes, generate table standees, and review statistics.</p>
         </div>
-        <div className="sm:flex items-center gap-2 px-4 py-2 rounded-full glass border-[#D4A437]/20 text-xs font-semibold text-[#D4A437] w-fit">
-          <Sparkles className="w-4 h-4" /> {restaurant.subscription?.plan?.name || 'Trial'} Plan Active
-        </div>
-      </div>
+        <Badge variant="gold" showDot={true} className="w-fit self-start sm:self-center">
+          {restaurant.subscription?.plan?.name || 'Trial'} Plan
+        </Badge>
+      </Card>
 
-      {/* Stats Cards */}
+      {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         {/* Total Categories */}
-        <div className="glass p-6 rounded-2xl flex items-center justify-between">
-          <div>
-            <span className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Total Categories</span>
-            <h3 className="text-3xl font-bold mt-2 font-serif">{totalCategories}</h3>
-            <Link href="/dashboard/categories" className="text-xs text-[#D4A437] hover:underline mt-3 inline-flex items-center gap-1">
-              View Categories <ArrowUpRight className="w-3.5 h-3.5" />
-            </Link>
+        <Card className="p-6 flex flex-col justify-between h-40">
+          <div className="flex justify-between items-start">
+            <div>
+              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block">Menu Categories</span>
+              <h3 className="text-3xl font-bold mt-2 font-serif text-white">{totalCategories}</h3>
+            </div>
+            <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.06] text-gray-400">
+              <Layers className="w-4 h-4" />
+            </div>
           </div>
-          <div className="p-4 rounded-xl bg-gray-950/80 border border-gray-900 text-[#D4A437]">
-            <Layers className="w-6 h-6" />
-          </div>
-        </div>
+          <Link href="/dashboard/categories" className="text-[11px] text-[#D4A853] hover:underline inline-flex items-center gap-1 font-semibold">
+            Manage Categories <ArrowUpRight className="w-3 h-3" />
+          </Link>
+        </Card>
 
         {/* Total Menu Items */}
-        <div className="glass p-6 rounded-2xl flex items-center justify-between">
-          <div>
-            <span className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Total Menu Items</span>
-            <h3 className="text-3xl font-bold mt-2 font-serif">{totalMenuItems}</h3>
-            <Link href="/dashboard/items" className="text-xs text-[#D4A437] hover:underline mt-3 inline-flex items-center gap-1">
-              View Menu Items <ArrowUpRight className="w-3.5 h-3.5" />
-            </Link>
+        <Card className="p-6 flex flex-col justify-between h-40">
+          <div className="flex justify-between items-start">
+            <div>
+              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block">Menu Items</span>
+              <h3 className="text-3xl font-bold mt-2 font-serif text-white">{totalMenuItems}</h3>
+            </div>
+            <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.06] text-gray-400">
+              <UtensilsCrossed className="w-4 h-4" />
+            </div>
           </div>
-          <div className="p-4 rounded-xl bg-gray-950/80 border border-gray-900 text-[#D4A437]">
-            <UtensilsCrossed className="w-6 h-6" />
-          </div>
-        </div>
+          <Link href="/dashboard/items" className="text-[11px] text-[#D4A853] hover:underline inline-flex items-center gap-1 font-semibold">
+            Manage Dishes <ArrowUpRight className="w-3 h-3" />
+          </Link>
+        </Card>
 
         {/* QR Code Status */}
-        <div className="glass p-6 rounded-2xl flex items-center justify-between">
-          <div>
-            <span className="text-xs text-gray-500 font-semibold uppercase tracking-wider">QR Code Status</span>
-            <h3 className="text-3xl font-bold mt-2 font-serif text-emerald-400">{qrStatus}</h3>
-            <Link href="/dashboard/qrcode" className="text-xs text-[#D4A437] hover:underline mt-3 inline-flex items-center gap-1">
-              QR Settings <ArrowUpRight className="w-3.5 h-3.5" />
-            </Link>
+        <Card className="p-6 flex flex-col justify-between h-40">
+          <div className="flex justify-between items-start">
+            <div>
+              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block">QR Routing Code</span>
+              <h3 className={`text-3xl font-bold mt-2 font-serif ${qrStatus === 'Active' ? 'text-emerald-400' : 'text-amber-400'}`}>{qrStatus}</h3>
+            </div>
+            <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.06] text-gray-400">
+              <QrCode className="w-4 h-4" />
+            </div>
           </div>
-          <div className="p-4 rounded-xl bg-gray-950/80 border border-gray-900 text-[#D4A437]">
-            <QrCode className="w-6 h-6" />
-          </div>
-        </div>
+          <Link href="/dashboard/qrcode" className="text-[11px] text-[#D4A853] hover:underline inline-flex items-center gap-1 font-semibold">
+            Print Studio <ArrowUpRight className="w-3 h-3" />
+          </Link>
+        </Card>
       </div>
 
       {/* Quick Actions */}
-      <div className="glass p-8 rounded-3xl">
-        <h3 className="font-serif text-xl font-bold mb-6">Quick Actions</h3>
+      <Card className="p-8">
+        <h3 className="font-serif text-lg font-bold text-white mb-6">Quick Actions</h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <Link
             href="/dashboard/categories"
-            className="p-5 rounded-2xl bg-gray-950/40 hover:bg-[#D4A437]/5 border border-gray-900 hover:border-[#D4A437]/30 flex flex-col items-start transition-all"
+            className="p-5 rounded-xl bg-white/[0.01] hover:bg-white/[0.03] border border-white/[0.04] hover:border-[#D4A853]/30 flex flex-col items-start transition-all"
           >
-            <div className="p-2.5 rounded-lg bg-[#D4A437]/10 text-[#D4A437] mb-4">
-              <Plus className="w-5 h-5" />
+            <div className="p-2 rounded-lg bg-[#D4A853]/10 text-[#D4A853] mb-4">
+              <Plus className="w-4 h-4" />
             </div>
-            <h4 className="font-bold text-base mb-1">Add Menu Category</h4>
-            <p className="text-xs text-gray-500">Create groupings like Chef Picks, Starters, or Desserts.</p>
+            <h4 className="font-bold text-xs text-white mb-1">Create Category</h4>
+            <p className="text-[10px] text-gray-500">Group dishes (e.g. Starters, Mains, Desserts).</p>
           </Link>
 
           <Link
             href="/dashboard/items"
-            className="p-5 rounded-2xl bg-gray-950/40 hover:bg-[#D4A437]/5 border border-gray-900 hover:border-[#D4A437]/30 flex flex-col items-start transition-all"
+            className="p-5 rounded-xl bg-white/[0.01] hover:bg-white/[0.03] border border-white/[0.04] hover:border-[#D4A853]/30 flex flex-col items-start transition-all"
           >
-            <div className="p-2.5 rounded-lg bg-[#D4A437]/10 text-[#D4A437] mb-4">
-              <Plus className="w-5 h-5" />
+            <div className="p-2 rounded-lg bg-[#D4A853]/10 text-[#D4A853] mb-4">
+              <Plus className="w-4 h-4" />
             </div>
-            <h4 className="font-bold text-base mb-1">Add Menu Item</h4>
-            <p className="text-xs text-gray-500">Add dishes, specify prices, vegetarian flags, and upload images.</p>
+            <h4 className="font-bold text-xs text-white mb-1">Add Menu Dish</h4>
+            <p className="text-[10px] text-gray-500">Add photos, descriptions, and dietary labels.</p>
           </Link>
 
           <Link
             href="/dashboard/qrcode"
-            className="p-5 rounded-2xl bg-gray-950/40 hover:bg-[#D4A437]/5 border border-gray-900 hover:border-[#D4A437]/30 flex flex-col items-start transition-all"
+            className="p-5 rounded-xl bg-white/[0.01] hover:bg-white/[0.03] border border-white/[0.04] hover:border-[#D4A853]/30 flex flex-col items-start transition-all"
           >
-            <div className="p-2.5 rounded-lg bg-[#D4A437]/10 text-[#D4A437] mb-4">
-              <Download className="w-5 h-5" />
+            <div className="p-2 rounded-lg bg-[#D4A853]/10 text-[#D4A853] mb-4">
+              <Download className="w-4 h-4" />
             </div>
-            <h4 className="font-bold text-base mb-1">Download QR Code</h4>
-            <p className="text-xs text-gray-500">Print Table Tents, Acrylic Stands, or Counter Cards.</p>
+            <h4 className="font-bold text-xs text-white mb-1">Print QR standee</h4>
+            <p className="text-[10px] text-gray-500">Download acrylic cards or print tent standees.</p>
           </Link>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

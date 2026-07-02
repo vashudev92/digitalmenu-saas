@@ -2,41 +2,66 @@
 
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import { usePathname } from 'next/navigation';
 import { ExternalLink, HelpCircle, Bell } from 'lucide-react';
 
 export default function DashboardHeader() {
   const { data: session } = useSession();
+  const pathname = usePathname();
   const slug = session?.user?.restaurantSlug;
 
+  // Resolve dynamic title
+  const getPageTitle = () => {
+    if (pathname.includes('/profile')) return 'Restaurant Profile';
+    if (pathname.includes('/menu-profiles')) return 'Menu Profiles';
+    if (pathname.includes('/categories')) return 'Categories';
+    if (pathname.includes('/items')) return 'Menu Items';
+    if (pathname.includes('/qrcode')) return 'QR Code Studio';
+    if (pathname.includes('/subscription')) return 'Subscription';
+    if (pathname.includes('/settings')) return 'Settings';
+    return 'Workspace Dashboard';
+  };
+
+  const getPageSubtitle = () => {
+    if (pathname.includes('/profile')) return 'Manage your brand identity, contact details, and locations.';
+    if (pathname.includes('/menu-profiles')) return 'Configure distinct dining experiences and layout schemes.';
+    if (pathname.includes('/categories')) return 'Organize your dishes into scannable menu categories.';
+    if (pathname.includes('/items')) return 'Add and edit dishes, dietary markers, and pricing details.';
+    if (pathname.includes('/qrcode')) return 'Download routing codes and print themed tabletop tent standees.';
+    if (pathname.includes('/subscription')) return 'View subscription status, features, and plan tiers.';
+    if (pathname.includes('/settings')) return 'Manage password, credentials, and account parameters.';
+    return 'Overview of menu configurations and platform metrics.';
+  };
+
   return (
-    <header className="h-20 bg-[#0A0A0A] border-b border-[#D4A437]/10 flex items-center justify-between px-8 sticky top-0 z-10">
-      <div>
-        <h2 className="text-lg font-bold text-white">
-          Workspace Dashboard
+    <header className="h-16 bg-[#09090B] border-b border-white/[0.04] flex items-center justify-between px-8 sticky top-0 z-10">
+      <div className="text-left">
+        <h2 className="text-sm font-bold text-white tracking-wide">
+          {getPageTitle()}
         </h2>
-        <p className="text-xs text-gray-500 mt-0.5">Manage your digital menu listings and QR settings.</p>
+        <p className="text-[10px] text-gray-500 mt-0.5 leading-none">{getPageSubtitle()}</p>
       </div>
 
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-5">
         {slug ? (
           <Link
             href={`/r/${slug}`}
             target="_blank"
-            className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#D4A437]/20 bg-[#D4A437]/5 hover:bg-[#D4A437]/10 text-[#D4A437] text-xs font-semibold tracking-wide transition-all shadow-[0_0_10px_rgba(212,164,55,0.05)] hover:shadow-[0_0_15px_rgba(212,164,55,0.15)]"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] text-white text-[11px] font-semibold transition-all cursor-pointer"
           >
             <span>View Live Menu</span>
-            <ExternalLink className="w-3.5 h-3.5" />
+            <ExternalLink className="w-3.5 h-3.5 text-gray-400" />
           </Link>
         ) : (
-          <span className="text-xs text-gray-500 font-medium">No active restaurant URL</span>
+          <span className="text-[11px] text-gray-500 font-medium">No active URL</span>
         )}
 
-        <div className="flex items-center gap-3 text-gray-400">
-          <button className="p-2 rounded-full hover:bg-gray-900 hover:text-white transition-colors cursor-pointer">
-            <Bell className="w-5 h-5" />
+        <div className="flex items-center gap-1 text-gray-400">
+          <button className="p-2 rounded-lg hover:bg-white/[0.03] hover:text-white transition-all cursor-pointer">
+            <Bell className="w-4 h-4" />
           </button>
-          <Link href="/faq" target="_blank" className="p-2 rounded-full hover:bg-gray-900 hover:text-white transition-colors">
-            <HelpCircle className="w-5 h-5" />
+          <Link href="/faq" target="_blank" className="p-2 rounded-lg hover:bg-white/[0.03] hover:text-white transition-all">
+            <HelpCircle className="w-4 h-4" />
           </Link>
         </div>
       </div>
