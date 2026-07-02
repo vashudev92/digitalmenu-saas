@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   UtensilsCrossed,
   Plus,
@@ -12,11 +13,16 @@ import {
   X,
   Star,
   Check,
-  Slash,
   Search,
-  ChevronDown
+  ChevronDown,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import ImageCropper from '@/components/image-cropper';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input, TextArea, Select } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 
 interface Category {
   id: string;
@@ -44,7 +50,7 @@ export default function MenuItemsPage() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
-  // Modal State
+  // Slide-over Drawer state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
 
@@ -173,8 +179,8 @@ export default function MenuItemsPage() {
       const url = '/api/items';
       const method = isEdit ? 'PUT' : 'POST';
       const body = isEdit
-        ? { id: editingItem.id, name, description, price, image, isVeg, isFeatured, isAvailable, categoryId }
-        : { name, description, price, image, isVeg, isFeatured, isAvailable, categoryId, menuProfileId: selectedProfileId || undefined };
+        ? { id: editingItem.id, name, description, price: parseFloat(price), image, isVeg, isFeatured, isAvailable, categoryId }
+        : { name, description, price: parseFloat(price), image, isVeg, isFeatured, isAvailable, categoryId, menuProfileId: selectedProfileId || undefined };
 
       const res = await fetch(url, {
         method,
@@ -221,6 +227,35 @@ export default function MenuItemsPage() {
     }
   };
 
+  // Toggle item availability status
+  const handleToggleAvailability = async (item: MenuItem) => {
+    try {
+      const res = await fetch('/api/items', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          price: item.price,
+          image: item.image,
+          isVeg: item.isVeg,
+          isFeatured: item.isFeatured,
+          isAvailable: !item.isAvailable,
+          categoryId: item.categoryId
+        }),
+      });
+
+      if (res.ok) {
+        setItems((prev) =>
+          prev.map((i) => (i.id === item.id ? { ...i, isAvailable: !i.isAvailable } : i))
+        );
+      }
+    } catch (err) {
+      setError('Failed to update status.');
+    }
+  };
+
   // Group items by category for visual display
   const itemsByCategory = categories.reduce((acc, cat) => {
     const catItems = items.filter((item) => item.categoryId === cat.id);
@@ -231,21 +266,23 @@ export default function MenuItemsPage() {
   if (loadingProfiles) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <Loader2 className="w-10 h-10 animate-spin text-[#D4A437]" />
+        <Loader2 className="w-8 h-8 animate-spin text-[#D4A437]" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="max-w-5xl mx-auto space-y-6">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.04] pb-4 text-left">
         <div>
-          <h1 className="font-serif text-3xl font-bold flex items-center gap-2">
-            <UtensilsCrossed className="w-8 h-8 text-[#D4A437]" /> Menu Items
+          <span className="text-[10px] text-gray-500 font-mono tracking-wider uppercase block">Workspace / Catalogues</span>
+          <h1 className="font-serif text-2xl font-bold text-white mt-1 flex items-center gap-2">
+            <UtensilsCrossed className="w-5.5 h-5.5 text-[#D4A437]" /> Dishes Directory
           </h1>
-          <p className="text-gray-400 text-sm mt-1">Configure your food offerings, pricing, details and images.</p>
+          <p className="text-gray-400 text-xs mt-0.5">Configure your culinary offerings, pricing presets, and visual photography cards.</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0 self-start sm:self-center">
           {profiles.length > 0 && (
             <div className="relative shrink-0 text-left" ref={profileDropdownRef}>
               <button
@@ -254,18 +291,17 @@ export default function MenuItemsPage() {
                   setIsProfileDropdownOpen(!isProfileDropdownOpen);
                   setProfileSearch('');
                 }}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gray-950 border border-gray-900 text-xs font-semibold text-gray-300 hover:text-white hover:border-[#D4A437]/30 transition-all cursor-pointer select-none"
+                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-zinc-900 border border-white/5 text-xs font-semibold text-gray-300 hover:text-white hover:border-[#D4A437]/30 transition-all cursor-pointer select-none"
               >
-                <span className="text-gray-500 uppercase font-bold text-[10px]">Profile:</span>
-                <span className="text-[#D4A437] font-bold">
+                <span className="text-gray-500 uppercase font-bold text-[9px]">Profile:</span>
+                <span className="text-[#D4A853] font-bold">
                   {profiles.find(p => p.id === selectedProfileId)?.name || 'Select Profile'}
                 </span>
-                <ChevronDown className={`w-3.5 h-3.5 text-gray-505 transition-transform ${isProfileDropdownOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-3 h-3 text-gray-550 transition-transform ${isProfileDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {isProfileDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-60 bg-black border border-gray-800 rounded-2xl shadow-2xl shadow-black/90 z-50 p-2 space-y-2 animate-in fade-in slide-in-from-top-1 duration-150">
-                  {/* Search Input */}
+                <div className="absolute right-0 mt-2 w-60 bg-[#0D0D0F] border border-white/[0.06] rounded-2xl shadow-2xl shadow-black/80 z-50 p-2 space-y-2">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
                     <input
@@ -273,12 +309,11 @@ export default function MenuItemsPage() {
                       value={profileSearch}
                       onChange={(e) => setProfileSearch(e.target.value)}
                       placeholder="Search profiles..."
-                      className="w-full bg-gray-950 border border-gray-800 focus:border-[#D4A437] rounded-xl pl-9 pr-3 py-2 text-xs text-white focus:outline-none transition-all"
+                      className="w-full bg-[#111113] border border-white/[0.06] focus:border-[#D4A437] rounded-xl pl-9 pr-3 py-2 text-xs text-white focus:outline-none transition-all"
                     />
                   </div>
 
-                  {/* Options List */}
-                  <div className="max-h-40 overflow-y-auto divide-y divide-gray-900/60 scrollbar-thin">
+                  <div className="max-h-40 overflow-y-auto divide-y divide-white/[0.04] scrollbar-thin">
                     {profiles
                       .filter(p => p.name.toLowerCase().includes(profileSearch.toLowerCase()))
                       .map((p) => {
@@ -295,7 +330,7 @@ export default function MenuItemsPage() {
                             className={`w-full text-left px-3 py-2.5 rounded-lg text-xs font-medium transition-colors flex items-center justify-between cursor-pointer ${
                               isSelected
                                 ? 'bg-[#D4A437]/10 text-[#D4A437]'
-                                : 'text-gray-400 hover:bg-gray-950 hover:text-white'
+                                : 'text-gray-400 hover:bg-white/[0.01] hover:text-white'
                             }`}
                           >
                             <span className="truncate">{p.name}</span>
@@ -303,92 +338,90 @@ export default function MenuItemsPage() {
                           </button>
                         );
                       })}
-                    {profiles.filter(p => p.name.toLowerCase().includes(profileSearch.toLowerCase())).length === 0 && (
-                      <p className="text-center text-[10px] text-gray-600 py-3">No profiles found</p>
-                    )}
                   </div>
                 </div>
               )}
             </div>
           )}
-          <button
+          <Button
             onClick={openAddModal}
-            className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-[#D4A437] to-[#B88E2F] text-black font-bold text-sm shadow-[0_0_15px_rgba(212,164,55,0.2)] hover:shadow-[0_0_20px_rgba(212,164,55,0.3)] transition-all cursor-pointer"
+            size="sm"
+            className="h-9 gap-1.5 shrink-0"
           >
-            <Plus className="w-4 h-4" /> Add Menu Item
-          </button>
+            <Plus className="w-4 h-4 text-black font-bold" /> Add Menu Item
+          </Button>
         </div>
       </div>
 
       {message && (
-        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-sm flex items-center gap-3">
-          <CheckCircle className="w-5 h-5" />
+        <div className="p-4.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center gap-3 text-left">
+          <CheckCircle className="w-4 h-4" />
           <span>{message}</span>
         </div>
       )}
 
       {error && (
-        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/25 text-red-400 text-sm flex items-center gap-3">
-          <AlertCircle className="w-5 h-5" />
+        <div className="p-4.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center gap-3 text-left">
+          <AlertCircle className="w-4 h-4" />
           <span>{error}</span>
         </div>
       )}
 
-      {/* Categories sections */}
+      {/* Categories blocks lists */}
       {categories.length === 0 ? (
-        <div className="glass text-center py-16 text-gray-500 rounded-3xl">
-          <UtensilsCrossed className="w-12 h-12 mx-auto text-gray-700 mb-4" />
-          <p className="text-sm">Please create active Categories first to display dishes.</p>
-        </div>
+        <Card className="text-center py-16 text-gray-500 border-white/[0.04]">
+          <UtensilsCrossed className="w-10 h-10 mx-auto text-gray-700 mb-2" />
+          <p className="text-xs">Please create active Categories first to display dishes.</p>
+        </Card>
       ) : (
-        <div className="space-y-10">
+        <div className="space-y-8">
           {categories.map((cat) => {
             const catGroup = itemsByCategory[cat.id] || { name: cat.name, items: [] };
             if (catGroup.items.length === 0) return null;
 
             return (
-              <div key={cat.id} className="space-y-4">
-                <h2 className="font-serif text-2xl font-bold border-b border-gray-900 pb-2 text-[#D4A437]">
-                  {cat.name}
-                </h2>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div key={cat.id} className="space-y-4 text-left">
+                <div className="flex items-center gap-2 border-b border-white/[0.04] pb-2">
+                  <span className="text-[#D4A853] font-bold text-xs uppercase tracking-wider">{cat.name}</span>
+                  <span className="text-[10px] text-gray-500">({catGroup.items.length} dishes)</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {catGroup.items.map((item) => (
-                    <div key={item.id} className="glass p-5 rounded-2xl flex gap-4 items-center justify-between hover:border-[#D4A437]/25 transition-all">
+                    <Card key={item.id} className="p-4 flex gap-4 items-center justify-between border-white/[0.04] hover:border-[#D4A853]/25 transition-all bg-zinc-900/10 relative overflow-hidden group">
                       {/* Left: Image & Info */}
-                      <div className="flex gap-4 items-center overflow-hidden">
-                        <div className="w-20 h-20 rounded-xl bg-gray-950 border border-gray-900 overflow-hidden shrink-0 flex items-center justify-center">
+                      <div className="flex gap-4 items-center overflow-hidden flex-1">
+                        <div className="w-16 h-16 rounded-xl bg-zinc-950 border border-white/5 overflow-hidden shrink-0 flex items-center justify-center">
                           {item.image ? (
-                            <img src={item.image} alt={item.name} className="object-cover w-full h-full" />
+                            <img src={item.image} alt={item.name} className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300" />
                           ) : (
-                            <UtensilsCrossed className="w-6 h-6 text-gray-700" />
+                            <UtensilsCrossed className="w-5 h-5 text-gray-700" />
                           )}
                         </div>
-                        <div className="overflow-hidden">
+                        <div className="overflow-hidden space-y-0.5 text-left">
                           <div className="flex items-center gap-2">
-                            <h4 className="font-bold text-base text-white truncate">{item.name}</h4>
-                            {/* Veg/Non-Veg Tag */}
+                            <h4 className="font-serif font-bold text-sm text-white truncate">{item.name}</h4>
                             <span
-                              className={`w-3.5 h-3.5 border flex items-center justify-center rounded shrink-0 ${
+                              className={`w-3 h-3 border flex items-center justify-center rounded shrink-0 ${
                                 item.isVeg ? 'border-green-600' : 'border-red-600'
                               }`}
-                              title={item.isVeg ? 'Veg' : 'Non-Veg'}
                             >
                               <span className={`w-1.5 h-1.5 rounded-full ${item.isVeg ? 'bg-green-600' : 'bg-red-600'}`} />
                             </span>
                           </div>
-                          <p className="text-xs text-gray-500 truncate mt-1">{item.description || 'No description provided.'}</p>
                           
-                          <div className="flex items-center gap-3 mt-2">
-                            <span className="text-sm font-bold text-white">${item.price.toFixed(2)}</span>
+                          <p className="text-[11px] text-gray-400 truncate leading-relaxed">
+                            {item.description || 'No culinary details provided.'}
+                          </p>
+
+                          <div className="flex items-center gap-3 pt-1">
+                            <span className="text-xs font-bold text-white font-mono">${item.price.toFixed(2)}</span>
                             {item.isFeatured && (
-                              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-[#D4A437]/10 border border-[#D4A437]/25 text-[9px] font-bold text-[#D4A437]">
-                                <Star className="w-2.5 h-2.5 fill-[#D4A437]" /> Featured
-                              </span>
+                              <Badge variant="gold" className="text-[8px] px-1.5 py-0">Specials</Badge>
                             )}
                             {!item.isAvailable && (
-                              <span className="px-1.5 py-0.5 rounded bg-red-500/10 border border-red-500/25 text-[9px] font-bold text-red-400">
-                                Unavailable
+                              <span className="text-[8px] bg-red-500/10 border border-red-500/20 text-red-400 font-bold uppercase px-1.5 py-0.5 rounded">
+                                Out of Stock
                               </span>
                             )}
                           </div>
@@ -396,22 +429,34 @@ export default function MenuItemsPage() {
                       </div>
 
                       {/* Right: Actions */}
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-2 shrink-0">
+                        {/* Status Toggle */}
+                        <button
+                          onClick={() => handleToggleAvailability(item)}
+                          className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+                            item.isAvailable
+                              ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/15'
+                              : 'border-white/5 bg-zinc-900/40 text-gray-500 hover:text-gray-400'
+                          }`}
+                          title={item.isAvailable ? 'Mark Out of Stock' : 'Mark In Stock'}
+                        >
+                          {item.isAvailable ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                        </button>
+
                         <button
                           onClick={() => openEditModal(item)}
-                          className="p-2 rounded-lg bg-gray-950 border border-gray-900 text-gray-400 hover:text-[#D4A437] transition-all cursor-pointer"
+                          className="p-1.5 rounded-lg bg-zinc-950 border border-white/5 text-gray-500 hover:text-[#D4A853] transition-all cursor-pointer"
                         >
-                          <Edit2 className="w-4 h-4" />
+                          <Edit2 className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => handleDelete(item.id)}
-                          className="p-2 rounded-lg bg-gray-950 border border-gray-900 text-gray-400 hover:text-red-400 transition-all cursor-pointer"
+                          className="p-1.5 rounded-lg bg-zinc-950 border border-white/5 text-gray-500 hover:text-red-400 transition-all cursor-pointer"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
-
-                    </div>
+                    </Card>
                   ))}
                 </div>
               </div>
@@ -420,150 +465,150 @@ export default function MenuItemsPage() {
         </div>
       )}
 
-      {/* CREATE / EDIT MODAL */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="w-full max-w-lg glass-gold rounded-3xl p-6 sm:p-8 relative max-h-[90vh] overflow-y-auto">
-            <button
+      {/* SLIDE-OVER DRAWER FOR CREATE / EDIT */}
+      <AnimatePresence>
+        {isModalOpen && (
+          <div className="fixed inset-0 z-50 flex justify-end no-print">
+            {/* Backdrop Blur Overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-5 right-5 p-1 rounded-lg text-gray-400 hover:text-white hover:bg-gray-900"
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            />
+
+            {/* Slide Drawer container */}
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 28, stiffness: 260 }}
+              className="relative w-full max-w-lg bg-[#0D0D0F] border-l border-white/[0.06] shadow-2xl h-full flex flex-col justify-between p-6 overflow-y-auto"
             >
-              <X className="w-5 h-5" />
-            </button>
-
-            <h3 className="font-serif text-2xl font-bold mb-6">
-              {editingItem ? 'Edit Dish Details' : 'Add New Dish'}
-            </h3>
-
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
-                    Dish Name
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. Truffle Tagliatelle"
-                    className="w-full bg-[#0d0d0d] border border-gray-800 focus:border-[#D4A437] focus:ring-1 focus:ring-[#D4A437] rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-all"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
-                    Price ($)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    required
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    placeholder="28.00"
-                    className="w-full bg-[#0d0d0d] border border-gray-800 focus:border-[#D4A437] focus:ring-1 focus:ring-[#D4A437] rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-all"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
-                    Menu Category
-                  </label>
-                  <select
-                    value={categoryId}
-                    onChange={(e) => setCategoryId(e.target.value)}
-                    className="w-full bg-[#0d0d0d] border border-gray-800 focus:border-[#D4A437] focus:ring-1 focus:ring-[#D4A437] rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-all"
+              <div className="space-y-6">
+                <div className="flex items-center justify-between border-b border-white/[0.04] pb-4">
+                  <h3 className="font-serif text-lg font-bold text-white">
+                    {editingItem ? 'Edit Dish Parameters' : 'Add New Culinary Dish'}
+                  </h3>
+                  <button
+                    onClick={() => setIsModalOpen(false)}
+                    className="p-1 rounded-lg text-gray-500 hover:text-white hover:bg-white/[0.04] transition-colors"
                   >
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </select>
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
-                    Dietary Classification
-                  </label>
-                  <select
-                    value={isVeg ? 'veg' : 'nonveg'}
-                    onChange={(e) => setIsVeg(e.target.value === 'veg')}
-                    className="w-full bg-[#0d0d0d] border border-gray-800 focus:border-[#D4A437] focus:ring-1 focus:ring-[#D4A437] rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-all"
-                  >
-                    <option value="veg">Vegetarian</option>
-                    <option value="nonveg">Non-Vegetarian</option>
-                  </select>
-                </div>
-              </div>
+                <form onSubmit={handleSubmit} id="item-form" className="space-y-5 text-left">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Input
+                      label="Dish Name"
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="e.g. Truffle Tagliatelle"
+                    />
 
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
-                  Dish Description
-                </label>
-                <textarea
-                  rows={3}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="San Marzano tomato sauce, fresh fior di latte mozzarella, organic basil..."
-                  className="w-full bg-[#0d0d0d] border border-gray-800 focus:border-[#D4A437] focus:ring-1 focus:ring-[#D4A437] rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-all resize-none"
-                />
-              </div>
+                    <Input
+                      label="Price ($)"
+                      type="number"
+                      step="0.01"
+                      required
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value)}
+                      placeholder="28.00"
+                    />
 
-              <div>
-                <ImageCropper
-                  label="Dish Image (Square)"
-                  aspectRatio="square"
-                  value={image}
-                  onChange={(base64) => setImage(base64)}
-                />
-              </div>
+                    <Select
+                      label="Menu Category"
+                      value={categoryId}
+                      onChange={(e) => setCategoryId(e.target.value)}
+                      options={categories.map(cat => ({ value: cat.id, label: cat.name }))}
+                    />
 
-              {/* Status checklist options */}
-              <div className="flex flex-col sm:flex-row gap-4 border-t border-gray-900 pt-4">
-                <label className="flex items-center gap-2 select-none cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isFeatured}
-                    onChange={(e) => setIsFeatured(e.target.checked)}
-                    className="w-4.5 h-4.5 rounded border-gray-800 text-[#D4A437] bg-black focus:ring-[#D4A437]"
+                    <Select
+                      label="Dietary Classification"
+                      value={isVeg ? 'veg' : 'nonveg'}
+                      onChange={(e) => setIsVeg(e.target.value === 'veg')}
+                      options={[
+                        { value: 'veg', label: 'Vegetarian (Green)' },
+                        { value: 'nonveg', label: 'Non-Vegetarian (Red)' }
+                      ]}
+                    />
+                  </div>
+
+                  <TextArea
+                    label="Dish Description"
+                    rows={3}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="San Marzano tomato sauce, fresh fior di latte mozzarella, organic basil..."
                   />
-                  <span className="text-xs text-gray-300">Feature this Item (Highlight in specials)</span>
-                </label>
 
-                <label className="flex items-center gap-2 select-none cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isAvailable}
-                    onChange={(e) => setIsAvailable(e.target.checked)}
-                    className="w-4.5 h-4.5 rounded border-gray-800 text-[#D4A437] bg-black focus:ring-[#D4A437]"
-                  />
-                  <span className="text-xs text-gray-300">Mark as Available (Currently in stock)</span>
-                </label>
+                  {/* Progressive image cropper tool */}
+                  <div>
+                    <ImageCropper
+                      label="Dish Image (Square Layout)"
+                      aspectRatio="square"
+                      value={image}
+                      onChange={(base64) => setImage(base64)}
+                    />
+                  </div>
+
+                  {/* Action checkboxes */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-white/[0.01] border border-white/[0.04] p-4 rounded-xl">
+                    <label className="flex items-center gap-2.5 select-none cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={isFeatured}
+                        onChange={(e) => setIsFeatured(e.target.checked)}
+                        className="w-4.5 h-4.5 rounded border-white/[0.08] text-[#D4A853] bg-zinc-950 focus:ring-[#D4A853]/25 accent-[#D4A853] cursor-pointer"
+                      />
+                      <div className="text-left">
+                        <span className="text-xs font-bold text-white block">Feature Item</span>
+                        <span className="text-[9px] text-gray-500 block">Render on homepage carousel specials.</span>
+                      </div>
+                    </label>
+
+                    <label className="flex items-center gap-2.5 select-none cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={isAvailable}
+                        onChange={(e) => setIsAvailable(e.target.checked)}
+                        className="w-4.5 h-4.5 rounded border-white/[0.08] text-[#D4A853] bg-zinc-950 focus:ring-[#D4A853]/25 accent-[#D4A853] cursor-pointer"
+                      />
+                      <div className="text-left">
+                        <span className="text-xs font-bold text-white block">In Stock</span>
+                        <span className="text-[9px] text-gray-500 block">Toggle active online guest availability.</span>
+                      </div>
+                    </label>
+                  </div>
+                </form>
               </div>
 
-              <button
-                type="submit"
-                disabled={saving}
-                className="w-full py-4 rounded-xl bg-gradient-to-r from-[#D4A437] to-[#B88E2F] hover:from-[#B88E2F] hover:to-[#A37B24] text-black font-bold text-base transition-all duration-300 shadow-[0_0_15px_rgba(212,164,55,0.2)] disabled:opacity-50 flex items-center justify-center gap-2 mt-4"
-              >
-                {saving ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" /> Saving Dish...
-                  </>
-                ) : (
-                  <>
-                    {editingItem ? 'Save Changes' : 'Add Item'}
-                  </>
-                )}
-              </button>
-            </form>
+              {/* Form Action Buttons */}
+              <div className="border-t border-white/[0.04] pt-4 mt-6 flex gap-3">
+                <Button
+                  variant="ghost"
+                  className="flex-1"
+                  onClick={() => setIsModalOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  type="submit"
+                  form="item-form"
+                  className="flex-1"
+                  isLoading={saving}
+                >
+                  {editingItem ? 'Save Changes' : 'Create Dish'}
+                </Button>
+              </div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
 }
