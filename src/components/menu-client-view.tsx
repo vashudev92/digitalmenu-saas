@@ -427,8 +427,8 @@ export default function MenuClientView({
 
                               <div className="p-3 flex-1 flex flex-col justify-between gap-2">
                                 <div className="text-left space-y-1">
-                                  <h4 className="font-bold text-xs truncate leading-tight text-white">{item.name}</h4>
-                                  <p className={`text-[8px] leading-relaxed line-clamp-2 ${style.muted}`}>
+                                  <h4 className={`font-bold text-xs truncate leading-tight ${style.text}`}>{item.name}</h4>
+                                  <p className={`text-[8px] leading-relaxed line-clamp-2 ${style.text} opacity-75 font-medium`}>
                                     {item.description}
                                   </p>
                                 </div>
@@ -475,14 +475,14 @@ export default function MenuClientView({
 
                                 <div className="overflow-hidden flex-1">
                                   <div className="flex items-center gap-2">
-                                    <h4 className="font-mono text-xs uppercase font-black tracking-wider truncate">{item.name}</h4>
+                                    <h4 className={`font-mono text-xs uppercase font-black tracking-wider truncate ${style.text}`}>{item.name}</h4>
                                     <span className={`w-2.5 h-2.5 border flex items-center justify-center rounded-none shrink-0 ${
                                       item.isVeg ? 'border-green-600' : 'border-red-600'
                                     }`}>
-                                      <span className={`w-1 h-1 rounded-none ${item.isVeg ? 'bg-green-600' : 'bg-red-600'}`} />
+                                      <span className={`w-1.5 h-1.5 rounded-none ${item.isVeg ? 'bg-green-600' : 'bg-red-600'}`} />
                                     </span>
                                   </div>
-                                  <p className="text-[8px] leading-relaxed mt-0.5 line-clamp-1 opacity-60">
+                                  <p className={`text-[8px] leading-relaxed mt-0.5 line-clamp-1 ${style.text} opacity-75 font-medium`}>
                                     {item.description}
                                   </p>
                                   <div className="flex items-center gap-2 mt-1">
@@ -531,8 +531,8 @@ export default function MenuClientView({
                                 <div className="overflow-hidden flex-1">
                                   <div className="flex items-center gap-2">
                                     <h4
-                                      className={`text-xs truncate leading-tight ${
-                                        style.layoutMode === 'luxury' ? 'font-serif font-bold text-white' : 'font-bold'
+                                      className={`text-xs truncate leading-tight font-bold ${style.text} ${
+                                        style.layoutMode === 'luxury' ? 'font-serif' : ''
                                       }`}
                                     >
                                       {item.name}
@@ -544,7 +544,7 @@ export default function MenuClientView({
                                     </span>
                                   </div>
 
-                                  <p className={`text-[9px] leading-relaxed mt-1 line-clamp-2 ${style.muted}`}>
+                                  <p className={`text-[9px] leading-relaxed mt-1 line-clamp-2 ${style.text} opacity-75 font-medium`}>
                                     {item.description}
                                   </p>
 
