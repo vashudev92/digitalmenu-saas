@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
+import { useState, useEffect } from 'react';
 import {
   LayoutDashboard,
   Store,
@@ -18,7 +19,23 @@ import {
 
 export default function DashboardSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { data: session } = useSession();
+
+  const [impersonateSlug, setImpersonateSlug] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const match = document.cookie.match(new RegExp('(^| )impersonate_restaurant_slug=([^;]+)'));
+      if (match) setImpersonateSlug(decodeURIComponent(match[2]));
+    }
+  }, []);
+
+  const handleExitImpersonate = () => {
+    document.cookie = "impersonate_restaurant_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+    document.cookie = "impersonate_restaurant_slug=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+    router.push('/admin');
+  };
 
   const menuItems = [
     { name: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" />, href: '/dashboard' },
@@ -57,6 +74,20 @@ export default function DashboardSidebar() {
           </div>
         </div>
 
+        {/* Impersonation Indicator */}
+        {impersonateSlug && (
+          <div className="mx-4 mt-4 p-3 rounded-xl bg-[#D4A437]/5 border border-[#D4A437]/25 text-left">
+            <span className="text-[9px] text-[#D4A437] font-bold uppercase tracking-wider block">Admin Impersonating</span>
+            <span className="text-xs text-white block truncate font-semibold mt-0.5">{impersonateSlug}</span>
+            <button
+              onClick={handleExitImpersonate}
+              className="mt-2 w-full py-1 text-[10px] font-bold uppercase text-black bg-[#D4A437] hover:bg-[#C49B4A] rounded-lg transition-all cursor-pointer"
+            >
+              Exit & Return
+            </button>
+          </div>
+        )}
+
         {/* Navigation Items */}
         <nav className="mt-6 px-3 space-y-1">
           {menuItems.map((item, index) => {
@@ -67,11 +98,11 @@ export default function DashboardSidebar() {
                 href={item.href}
                 className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-medium transition-all relative ${
                   isActive
-                    ? 'bg-white/[0.03] text-[#D4A853] border-l-2 border-[#D4A853] pl-3.5'
+                    ? 'bg-white/[0.03] text-[#D4A437] border-l-2 border-[#D4A437] pl-3.5'
                     : 'text-gray-400 hover:text-white hover:bg-white/[0.01]'
                 }`}
               >
-                <div className={`transition-colors shrink-0 ${isActive ? 'text-[#D4A853]' : 'text-gray-500 group-hover:text-gray-300'}`}>
+                <div className={`transition-colors shrink-0 ${isActive ? 'text-[#D4A437]' : 'text-gray-500 group-hover:text-gray-300'}`}>
                   {item.icon}
                 </div>
                 <span>{item.name}</span>

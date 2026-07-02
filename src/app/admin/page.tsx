@@ -14,42 +14,140 @@ import {
   Lock,
   LogOut,
   ArrowRight,
-  Search
+  Search,
+  CreditCard,
+  Layers,
+  Settings,
+  BookOpen,
+  Plus,
+  Trash2,
+  DollarSign,
+  TrendingUp,
+  FileText,
+  Clock,
+  MapPin,
+  ExternalLink,
+  Sliders,
+  Bell,
+  Eye,
+  FileCheck,
+  ChevronRight,
+  Check,
+  UserCheck
 } from 'lucide-react';
 import Link from 'next/link';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input, TextArea, Select } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 
 interface RestaurantItem {
   id: string;
   name: string;
   slug: string;
-  createdAt: string;
+  logo: string | null;
   ownerName: string;
   ownerEmail: string;
   dishesCount: number;
+  profilesCount: number;
+  qrCount: number;
+  theme: string;
   planName: string;
   subStatus: string;
+  expiryDate: string | null;
+  createdAt: string;
+}
+
+interface UpgradeRequest {
+  id: string;
+  restaurantId: string;
+  planId: string;
+  billingCycle: string;
+  amount: number;
+  paymentProof: string | null;
+  referenceNo: string | null;
+  status: string;
+  createdAt: string;
+  restaurant: { name: string; slug: string };
+  plan: { name: string };
+}
+
+interface PaymentRecord {
+  id: string;
+  restaurantId: string;
+  amount: number;
+  gstAmount: number;
+  paymentMode: string;
+  referenceNo: string | null;
+  status: string;
+  proofAttachment: string | null;
+  adminNotes: string | null;
+  createdAt: string;
+  restaurant: { name: string };
+}
+
+interface AuditLog {
+  id: string;
+  action: string;
+  details: string | null;
+  adminId: string | null;
+  reason: string | null;
+  createdAt: string;
 }
 
 interface Stats {
   totalRestaurants: number;
-  activeSubCount: number;
-  suspendedCount: number;
-  totalMenuItems: number;
+  activeRestaurants: number;
+  trialCount: number;
+  expiredCount: number;
+  cancelledCount: number;
+  pendingApprovals: number;
+  pendingPayments: number;
+  totalRevenue: number;
+  expiringSoonCount: number;
+  monthlyMRR: number;
+}
+
+interface SystemNotification {
+  id: string;
+  type: string;
+  title: string;
+  description: string;
+  date: string;
 }
 
 export default function AdminPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
+  // Tab State
+  const [activeTab, setActiveTab] = useState<'overview' | 'crm' | 'approvals' | 'payments' | 'themes' | 'plans' | 'settings' | 'logs'>('overview');
+
   const [stats, setStats] = useState<Stats | null>(null);
   const [restaurants, setRestaurants] = useState<RestaurantItem[]>([]);
+  const [upgradeRequests, setUpgradeRequests] = useState<UpgradeRequest[]>([]);
+  const [payments, setPayments] = useState<PaymentRecord[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [themeUsage, setThemeUsage] = useState<Record<string, number>>({});
+  const [monthlyStats, setMonthlyStats] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<SystemNotification[]>([]);
+  const [plans, setPlans] = useState<any[]>([]);
+  const [systemSettings, setSystemSettings] = useState<any>({});
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [search, setSearch] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
-  async function loadAdminData() {
+  // Modals & Slide-Overs
+  const [viewProofUrl, setViewProofUrl] = useState<string | null>(null);
+  const [activeApprovalReq, setActiveApprovalReq] = useState<UpgradeRequest | null>(null);
+  const [approvalNotes, setApprovalNotes] = useState('');
+  const [editingPlan, setEditingPlan] = useState<any | null>(null);
+
+  async function loadData() {
     try {
+      setLoading(true);
       const res = await fetch('/api/admin/dashboard');
       if (!res.ok) {
         if (res.status === 401) {
@@ -61,6 +159,22 @@ export default function AdminPage() {
       const data = await res.json();
       setStats(data.stats);
       setRestaurants(data.restaurants);
+      setUpgradeRequests(data.upgradeRequests || []);
+      setPayments(data.payments || []);
+      setAuditLogs(data.auditLogs || []);
+      setThemeUsage(data.themeUsage || {});
+      setMonthlyStats(data.monthlyStats || []);
+      setNotifications(data.notifications || []);
+
+      // Load plans
+      const resPlans = await fetch('/api/admin/plans');
+      const plansData = await resPlans.json();
+      setPlans(plansData.plans || []);
+
+      // Load settings
+      const resSettings = await fetch('/api/admin/settings');
+      const settingsData = await resSettings.json();
+      setSystemSettings(settingsData.settings || {});
     } catch (err) {
       setError('Could not fetch administrator analytics.');
     } finally {
@@ -79,56 +193,122 @@ export default function AdminPage() {
       return;
     }
     if (session && session.user.role === 'ADMIN') {
-      loadAdminData();
+      loadData();
     }
   }, [session, status]);
 
-  const handleAction = async (id: string, action: 'suspend' | 'approve') => {
-    setActionLoadingId(id);
+  // Impersonate owner view helper
+  const handleImpersonate = (restaurantId: string, slug: string) => {
+    document.cookie = `impersonate_restaurant_id=${restaurantId}; path=/`;
+    document.cookie = `impersonate_restaurant_slug=${slug}; path=/`;
+    router.push('/dashboard');
+  };
+
+  // Process Upgrade Request
+  const handleApproval = async (action: 'APPROVE' | 'REJECT') => {
+    if (!activeApprovalReq) return;
+    try {
+      const res = await fetch('/api/admin/upgrade-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requestId: activeApprovalReq.id,
+          action,
+          adminNotes: approvalNotes,
+        }),
+      });
+
+      if (!res.ok) throw new Error('Action failed');
+      
+      alert(`Request successfully ${action === 'APPROVE' ? 'Approved' : 'Rejected'}.`);
+      setActiveApprovalReq(null);
+      setApprovalNotes('');
+      loadData();
+    } catch (err) {
+      alert('Error updating request status.');
+    }
+  };
+
+  // Suspend/Resume Venue
+  const handleSuspendToggle = async (restaurantId: string, currentStatus: string) => {
+    setActionLoadingId(restaurantId);
+    const action = currentStatus === 'CANCELLED' ? 'approve' : 'suspend';
     try {
       const res = await fetch('/api/admin/suspend', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ restaurantId: id, action }),
+        body: JSON.stringify({ restaurantId, action }),
       });
 
       if (!res.ok) throw new Error('Action failed');
-
-      setRestaurants((prev) =>
-        prev.map((r) =>
-          r.id === id ? { ...r, subStatus: action === 'suspend' ? 'CANCELLED' : 'ACTIVE' } : r
-        )
-      );
-
-      // Reload stats
-      const statsRes = await fetch('/api/admin/dashboard');
-      const statsData = await statsRes.json();
-      setStats(statsData.stats);
+      
+      alert(`Restaurant successfully ${action === 'suspend' ? 'Suspended' : 'Activated'}.`);
+      loadData();
     } catch (err) {
-      alert('Failed to perform admin status change.');
+      alert('Error toggling suspension status.');
     } finally {
       setActionLoadingId(null);
     }
   };
 
+  // Edit Plan Details
+  const handleSavePlan = async () => {
+    if (!editingPlan) return;
+    try {
+      const res = await fetch('/api/admin/plans', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          planId: editingPlan.id,
+          ...editingPlan,
+        }),
+      });
+
+      if (!res.ok) throw new Error('Failed to update plan configurations.');
+      
+      alert('Plan limits and MRR details successfully updated.');
+      setEditingPlan(null);
+      loadData();
+    } catch (err) {
+      alert('Error saving plan parameters.');
+    }
+  };
+
+  // Save Settings
+  const handleSaveSettings = async () => {
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ settings: systemSettings }),
+      });
+
+      if (!res.ok) throw new Error('Failed to save settings');
+      alert('System settings updated successfully.');
+      loadData();
+    } catch (err) {
+      alert('Error updating system configurations.');
+    }
+  };
+
   const filteredRestaurants = restaurants.filter(
     (r) =>
-      r.name.toLowerCase().includes(search.toLowerCase()) ||
-      r.ownerName.toLowerCase().includes(search.toLowerCase()) ||
-      r.ownerEmail.toLowerCase().includes(search.toLowerCase())
+      r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.ownerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.ownerEmail.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   if (status === 'loading' || loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#0A0A0A] text-white">
-        <Loader2 className="w-10 h-10 animate-spin text-[#D4A437]" />
+      <div className="flex h-screen items-center justify-center bg-[#050505] text-white">
+        <Loader2 className="w-8 h-8 animate-spin text-[#D4A437]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#0A0A0A] text-white p-4">
+      <div className="flex h-screen items-center justify-center bg-[#050505] text-white p-4">
         <div className="glass p-8 rounded-3xl text-center max-w-md">
           <Lock className="w-12 h-12 mx-auto text-red-500 mb-4" />
           <h3 className="font-serif text-2xl font-bold mb-2">Access Denied</h3>
@@ -145,209 +325,974 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white p-6 sm:p-10 space-y-8">
-      {/* Header bar */}
-      <div className="flex items-center justify-between border-b border-[#D4A437]/10 pb-6">
+    <div className="min-h-screen bg-[#050505] text-white flex flex-col">
+      {/* Top Header Command Bar */}
+      <header className="border-b border-white/[0.04] bg-[#0E0E0E]/80 backdrop-blur-md px-6 py-4 flex items-center justify-between sticky top-0 z-40">
         <div className="flex items-center gap-3">
-          <Shield className="w-8 h-8 text-[#D4A437]" />
+          <Shield className="w-6 h-6 text-[#D4A437]" />
           <div>
-            <h1 className="font-serif text-3xl font-bold">Admin Portal</h1>
-            <span className="text-xs text-gray-500 font-semibold tracking-widest uppercase">Platform Control Panel</span>
+            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest block">Operations Center</span>
+            <h1 className="font-serif text-lg font-bold text-white leading-none">DigitalMenu Control Panel</h1>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <Link
-            href="/admin/themes"
-            className="text-xs text-[#D4A437] hover:text-white border border-[#D4A437]/20 hover:border-[#D4A437]/60 px-4 py-2.5 rounded-full transition-all bg-[#D4A437]/5 font-semibold"
-          >
-            Theme Library
-          </Link>
+        <div className="flex items-center gap-3">
+          {/* Notification bell badge */}
+          {notifications.length > 0 && (
+            <div className="relative">
+              <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-600 rounded-full flex items-center justify-center text-[8px] font-bold text-white animate-pulse">
+                {notifications.length}
+              </span>
+              <button 
+                onClick={() => alert(`Operational Notifications:\n` + notifications.map(n => `- ${n.title}: ${n.description}`).join('\n'))}
+                className="p-2 rounded-xl bg-white/[0.02] border border-white/[0.04] text-gray-400 hover:text-white"
+              >
+                <Bell className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
           <Link
             href="/dashboard"
-            className="text-xs text-gray-400 hover:text-white border border-gray-800 hover:border-gray-700 px-4 py-2.5 rounded-full transition-all"
+            className="text-xs text-gray-400 hover:text-white border border-white/[0.04] bg-white/[0.01] px-4 py-2 rounded-xl transition-all"
           >
             Owner View
           </Link>
           <button
             onClick={() => signOut({ callbackUrl: '/' })}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 text-red-400 text-xs font-semibold tracking-wide transition-all"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 text-red-400 text-xs font-bold transition-all cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" /> Sign Out
           </button>
         </div>
+      </header>
+
+      {/* Main Body Workspace split */}
+      <div className="flex flex-1 flex-col lg:flex-row">
+        {/* Navigation Sidebar */}
+        <aside className="w-full lg:w-64 border-r border-white/[0.04] bg-[#0A0A0A] p-4 flex flex-col gap-1.5 shrink-0">
+          <button
+            onClick={() => setActiveTab('overview')}
+            className={`w-full text-left px-4.5 py-3 rounded-xl text-xs font-bold transition-all flex items-center gap-3 ${
+              activeTab === 'overview'
+                ? 'bg-[#D4A437]/10 text-[#D4A437] border-l-2 border-[#D4A437]'
+                : 'text-gray-400 hover:bg-white/[0.02] hover:text-white border-l-2 border-transparent'
+            }`}
+          >
+            <TrendingUp className="w-4 h-4" />
+            <span>Executive Overview</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('crm')}
+            className={`w-full text-left px-4.5 py-3 rounded-xl text-xs font-bold transition-all flex items-center gap-3 ${
+              activeTab === 'crm'
+                ? 'bg-[#D4A437]/10 text-[#D4A437] border-l-2 border-[#D4A437]'
+                : 'text-gray-400 hover:bg-white/[0.02] hover:text-white border-l-2 border-transparent'
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            <span>Restaurant CRM</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('approvals')}
+            className={`w-full text-left px-4.5 py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-between gap-3 ${
+              activeTab === 'approvals'
+                ? 'bg-[#D4A437]/10 text-[#D4A437] border-l-2 border-[#D4A437]'
+                : 'text-gray-400 hover:bg-white/[0.02] hover:text-white border-l-2 border-transparent'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <FileCheck className="w-4 h-4" />
+              <span>Upgrade Approvals</span>
+            </div>
+            {stats && stats.pendingApprovals > 0 && (
+              <span className="bg-[#D4A437] text-black px-1.5 py-0.5 rounded-md text-[9px] font-bold">
+                {stats.pendingApprovals}
+              </span>
+            )}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('payments')}
+            className={`w-full text-left px-4.5 py-3 rounded-xl text-xs font-bold transition-all flex items-center gap-3 ${
+              activeTab === 'payments'
+                ? 'bg-[#D4A437]/10 text-[#D4A437] border-l-2 border-[#D4A437]'
+                : 'text-gray-400 hover:bg-white/[0.02] hover:text-white border-l-2 border-transparent'
+            }`}
+          >
+            <DollarSign className="w-4 h-4" />
+            <span>Payments Ledger</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('themes')}
+            className={`w-full text-left px-4.5 py-3 rounded-xl text-xs font-bold transition-all flex items-center gap-3 ${
+              activeTab === 'themes'
+                ? 'bg-[#D4A437]/10 text-[#D4A437] border-l-2 border-[#D4A437]'
+                : 'text-gray-400 hover:bg-white/[0.02] hover:text-white border-l-2 border-transparent'
+            }`}
+          >
+            <Layers className="w-4 h-4" />
+            <span>Theme Marketplace</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('plans')}
+            className={`w-full text-left px-4.5 py-3 rounded-xl text-xs font-bold transition-all flex items-center gap-3 ${
+              activeTab === 'plans'
+                ? 'bg-[#D4A437]/10 text-[#D4A437] border-l-2 border-[#D4A437]'
+                : 'text-gray-400 hover:bg-white/[0.02] hover:text-white border-l-2 border-transparent'
+            }`}
+          >
+            <Sliders className="w-4 h-4" />
+            <span>Plan Configurator</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('settings')}
+            className={`w-full text-left px-4.5 py-3 rounded-xl text-xs font-bold transition-all flex items-center gap-3 ${
+              activeTab === 'settings'
+                ? 'bg-[#D4A437]/10 text-[#D4A437] border-l-2 border-[#D4A437]'
+                : 'text-gray-400 hover:bg-white/[0.02] hover:text-white border-l-2 border-transparent'
+            }`}
+          >
+            <Settings className="w-4 h-4" />
+            <span>System Settings</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('logs')}
+            className={`w-full text-left px-4.5 py-3 rounded-xl text-xs font-bold transition-all flex items-center gap-3 ${
+              activeTab === 'logs'
+                ? 'bg-[#D4A437]/10 text-[#D4A437] border-l-2 border-[#D4A437]'
+                : 'text-gray-400 hover:bg-white/[0.02] hover:text-white border-l-2 border-transparent'
+            }`}
+          >
+            <FileText className="w-4 h-4" />
+            <span>Compliance Logs</span>
+          </button>
+        </aside>
+
+        {/* Dynamic Workspace Container */}
+        <main className="flex-1 p-6 overflow-y-auto max-w-7xl mx-auto w-full space-y-6">
+          
+          {/* TAB 1: EXECUTIVE OVERVIEW */}
+          {activeTab === 'overview' && (
+            <div className="space-y-6 text-left">
+              <div>
+                <h2 className="font-serif text-xl font-bold text-white">Executive Command Center</h2>
+                <p className="text-gray-400 text-xs mt-0.5">Core KPIs, registrations, and dynamic revenue metrics.</p>
+              </div>
+
+              {/* Stats Cards Grid */}
+              {stats && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <Card className="p-4 flex flex-col justify-between min-h-[110px]">
+                    <div>
+                      <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block">Total Venues</span>
+                      <span className="text-2xl font-serif font-bold text-white">{stats.totalRestaurants}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[10px] text-[#D4A437] mt-2">
+                      <Store className="w-3.5 h-3.5" />
+                      <span>{stats.activeRestaurants} Active ({(stats.activeRestaurants / (stats.totalRestaurants || 1) * 100).toFixed(0)}%)</span>
+                    </div>
+                  </Card>
+
+                  <Card className="p-4 flex flex-col justify-between min-h-[110px]">
+                    <div>
+                      <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block">Monthly MRR</span>
+                      <span className="text-2xl font-serif font-bold text-white">${stats.monthlyMRR.toFixed(2)}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[10px] text-emerald-400 mt-2">
+                      <DollarSign className="w-3.5 h-3.5" />
+                      <span>Total Revenue: ${stats.totalRevenue.toFixed(2)}</span>
+                    </div>
+                  </Card>
+
+                  <Card className="p-4 flex flex-col justify-between min-h-[110px]">
+                    <div>
+                      <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block">Trial vs Paid</span>
+                      <span className="text-2xl font-serif font-bold text-white">
+                        {stats.trialCount} / {stats.activeRestaurants}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[10px] text-gray-400 mt-2">
+                      <Users className="w-3.5 h-3.5" />
+                      <span>Expired/Suspended: {stats.expiredCount + stats.cancelledCount}</span>
+                    </div>
+                  </Card>
+
+                  <Card className="p-4 flex flex-col justify-between min-h-[110px]">
+                    <div>
+                      <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block">Action Queues</span>
+                      <span className="text-2xl font-serif font-bold text-[#D4A437]">
+                        {stats.pendingApprovals + stats.pendingPayments}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[10px] text-red-400 mt-2">
+                      <Clock className="w-3.5 h-3.5 animate-pulse" />
+                      <span>Requires Manual Verification</span>
+                    </div>
+                  </Card>
+                </div>
+              )}
+
+              {/* Visual Mock SVG Charts Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="p-5 space-y-4">
+                  <div>
+                    <h4 className="text-xs font-bold text-white uppercase tracking-wider">Restaurant Growth (6 Months)</h4>
+                    <p className="text-[10px] text-gray-500">Cumulative platform registrations.</p>
+                  </div>
+                  <div className="h-44 w-full flex items-end justify-between pt-4 border-b border-white/5 font-mono text-[9px] text-gray-600">
+                    {monthlyStats.map((item, idx) => (
+                      <div key={idx} className="flex flex-col items-center gap-2 flex-1">
+                        <span className="text-white font-bold">{item.registrations}</span>
+                        <div 
+                          className="w-8 bg-[#D4A437]/20 border-t border-[#D4A437] rounded-t-md transition-all duration-500 hover:bg-[#D4A437]/40"
+                          style={{ height: `${(item.registrations / (stats?.totalRestaurants || 10)) * 100}px` }}
+                        />
+                        <span className="mt-1">{item.month}</span>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+
+                <Card className="p-5 space-y-4">
+                  <div>
+                    <h4 className="text-xs font-bold text-white uppercase tracking-wider">Revenue Growth MRR ($)</h4>
+                    <p className="text-[10px] text-gray-500">Verified platform payments ledger totals.</p>
+                  </div>
+                  <div className="h-44 w-full flex items-end justify-between pt-4 border-b border-white/5 font-mono text-[9px] text-gray-600">
+                    {monthlyStats.map((item, idx) => (
+                      <div key={idx} className="flex flex-col items-center gap-2 flex-1">
+                        <span className="text-emerald-400 font-bold">${item.revenue}</span>
+                        <div 
+                          className="w-8 bg-emerald-500/20 border-t border-emerald-500 rounded-t-md transition-all duration-500 hover:bg-emerald-500/40"
+                          style={{ height: `${(item.revenue / (stats?.totalRevenue || 500)) * 100}px` }}
+                        />
+                        <span className="mt-1">{item.month}</span>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              </div>
+
+              {/* Theme Usage Split */}
+              <Card className="p-5 space-y-4">
+                <div>
+                  <h4 className="text-xs font-bold text-white uppercase tracking-wider">Active theme usage split</h4>
+                  <p className="text-[10px] text-gray-500">Distribution of layouts across active digital menu profiles.</p>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+                  {Object.entries(themeUsage).map(([themeKey, count]) => (
+                    <div key={themeKey} className="p-3 bg-white/[0.01] border border-white/5 rounded-2xl flex flex-col items-center text-center justify-center">
+                      <span className="text-xs font-mono font-bold text-white">{count}</span>
+                      <span className="text-[9px] text-gray-500 uppercase font-semibold mt-1 truncate max-w-full">
+                        {themeKey.replace('_', ' ')}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </div>
+          )}
+
+          {/* TAB 2: CRM MANAGER */}
+          {activeTab === 'crm' && (
+            <div className="space-y-4 text-left">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="font-serif text-xl font-bold text-white">Restaurant Directory</h2>
+                  <p className="text-gray-400 text-xs mt-0.5">Logins simulation, billing extensions, status overrides.</p>
+                </div>
+
+                <div className="relative w-full sm:max-w-xs">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
+                    <Search className="w-4 h-4" />
+                  </div>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search by name, owner, or email..."
+                    className="w-full bg-[#0d0d0d] border border-white/5 focus:border-[#D4A437] focus:ring-1 focus:ring-[#D4A437] rounded-xl pl-9 pr-4 py-2.5 text-xs text-white placeholder-gray-600 focus:outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              <Card className="overflow-hidden overflow-x-auto border-white/5">
+                <table className="w-full text-left border-collapse min-w-[900px]">
+                  <thead>
+                    <tr className="border-b border-white/5 bg-white/[0.01] text-[10px] font-bold text-gray-400 uppercase">
+                      <th className="px-6 py-4">Venue Details</th>
+                      <th className="px-6 py-4">Owner Account</th>
+                      <th className="px-6 py-4 text-center">Menu Profiles</th>
+                      <th className="px-6 py-4 text-center">Dishes</th>
+                      <th className="px-6 py-4">Plan / Expiry</th>
+                      <th className="px-6 py-4">Status</th>
+                      <th className="px-6 py-4 text-right">Impersonation & Overrides</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5 text-xs">
+                    {filteredRestaurants.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                          No restaurants found matching search parameters.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredRestaurants.map((res) => {
+                        const isSuspended = res.subStatus === 'CANCELLED';
+                        return (
+                          <tr key={res.id} className="hover:bg-white/[0.01] transition-all">
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-3">
+                                {res.logo ? (
+                                  <img src={res.logo} className="w-7 h-7 rounded-lg object-cover" />
+                                ) : (
+                                  <div className="w-7 h-7 bg-white/5 rounded-lg flex items-center justify-center text-xs font-bold text-white">
+                                    {res.name.charAt(0)}
+                                  </div>
+                                )}
+                                <div>
+                                  <span className="font-bold text-white block">{res.name}</span>
+                                  <a href={`/r/${res.slug}`} target="_blank" className="text-[10px] text-[#D4A437] hover:underline flex items-center gap-0.5">
+                                    /r/{res.slug} <ExternalLink className="w-2.5 h-2.5" />
+                                  </a>
+                                </div>
+                              </div>
+                            </td>
+
+                            <td className="px-6 py-4">
+                              <span className="font-semibold text-gray-200 block">{res.ownerName}</span>
+                              <span className="text-[10px] text-gray-500 block">{res.ownerEmail}</span>
+                            </td>
+
+                            <td className="px-6 py-4 text-center font-bold font-mono text-gray-300">
+                              {res.profilesCount}
+                            </td>
+
+                            <td className="px-6 py-4 text-center font-bold font-mono text-gray-300">
+                              {res.dishesCount}
+                            </td>
+
+                            <td className="px-6 py-4">
+                              <span className="font-semibold text-white block">{res.planName}</span>
+                              <span className="text-[10px] text-gray-500 font-mono">
+                                {res.expiryDate ? new Date(res.expiryDate).toLocaleDateString() : 'N/A'}
+                              </span>
+                            </td>
+
+                            <td className="px-6 py-4">
+                              <Badge variant={isSuspended ? 'error' : 'success'}>
+                                {isSuspended ? 'Suspended' : 'Active'}
+                              </Badge>
+                            </td>
+
+                            <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap">
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => handleImpersonate(res.id, res.slug)}
+                                className="h-8 gap-1.5"
+                              >
+                                <UserCheck className="w-3.5 h-3.5 text-[#D4A437]" /> Login As
+                              </Button>
+
+                              <Button
+                                variant={isSuspended ? 'primary' : 'danger'}
+                                size="sm"
+                                onClick={() => handleSuspendToggle(res.id, res.subStatus)}
+                                isLoading={actionLoadingId === res.id}
+                                className="h-8"
+                              >
+                                {isSuspended ? 'Activate' : 'Suspend'}
+                              </Button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </Card>
+            </div>
+          )}
+
+          {/* TAB 3: UPGRADE APPROVALS */}
+          {activeTab === 'approvals' && (
+            <div className="space-y-6 text-left">
+              <div>
+                <h2 className="font-serif text-xl font-bold text-white">Upgrade Request verification</h2>
+                <p className="text-gray-400 text-xs mt-0.5">Approve or reject pending subscription payments.</p>
+              </div>
+
+              <Card className="overflow-hidden overflow-x-auto border-white/5">
+                <table className="w-full text-left border-collapse min-w-[800px]">
+                  <thead>
+                    <tr className="border-b border-white/5 bg-white/[0.01] text-[10px] font-bold text-gray-400 uppercase">
+                      <th className="px-6 py-4">Restaurant</th>
+                      <th className="px-6 py-4">Requested Plan</th>
+                      <th className="px-6 py-4">Billing Cycle</th>
+                      <th className="px-6 py-4">Cost (USD)</th>
+                      <th className="px-6 py-4">Reference UTR</th>
+                      <th className="px-6 py-4">Requested Date</th>
+                      <th className="px-6 py-4">Status</th>
+                      <th className="px-6 py-4 text-right">Verification Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5 text-xs">
+                    {upgradeRequests.length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
+                          No upgrade requests logged in the database.
+                        </td>
+                      </tr>
+                    ) : (
+                      upgradeRequests.map((req) => (
+                        <tr key={req.id} className="hover:bg-white/[0.01] transition-all">
+                          <td className="px-6 py-4 font-bold text-white">
+                            {req.restaurant?.name || 'Unknown'}
+                          </td>
+                          <td className="px-6 py-4">
+                            <Badge variant="gold">{req.plan?.name}</Badge>
+                          </td>
+                          <td className="px-6 py-4 font-mono font-bold text-gray-300">
+                            {req.billingCycle}
+                          </td>
+                          <td className="px-6 py-4 font-bold font-mono text-emerald-400">
+                            ${req.amount.toFixed(2)}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="font-mono text-white bg-white/5 px-2 py-1 rounded">
+                              {req.referenceNo || 'None'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-gray-500 font-mono">
+                            {new Date(req.createdAt).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4">
+                            <Badge variant={req.status === 'PENDING' ? 'warning' : req.status === 'APPROVED' ? 'success' : 'error'}>
+                              {req.status}
+                            </Badge>
+                          </td>
+                          <td className="px-6 py-4 text-right space-x-2">
+                            {req.paymentProof && (
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => setViewProofUrl(req.paymentProof)}
+                                className="h-8"
+                              >
+                                View Proof
+                              </Button>
+                            )}
+                            
+                            {req.status === 'PENDING' && (
+                              <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={() => setActiveApprovalReq(req)}
+                                className="h-8"
+                              >
+                                Process Verification
+                              </Button>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </Card>
+            </div>
+          )}
+
+          {/* TAB 4: PAYMENTS LEDGER */}
+          {activeTab === 'payments' && (
+            <div className="space-y-6 text-left">
+              <div>
+                <h2 className="font-serif text-xl font-bold text-white">Financial Payments Ledger</h2>
+                <p className="text-gray-400 text-xs mt-0.5">Logs of all manual bank transfers and verification records.</p>
+              </div>
+
+              <Card className="overflow-hidden overflow-x-auto border-white/5">
+                <table className="w-full text-left border-collapse min-w-[800px]">
+                  <thead>
+                    <tr className="border-b border-white/5 bg-white/[0.01] text-[10px] font-bold text-gray-400 uppercase">
+                      <th className="px-6 py-4">UTR Reference</th>
+                      <th className="px-6 py-4">Restaurant</th>
+                      <th className="px-6 py-4">Subtotal</th>
+                      <th className="px-6 py-4">GST (18%)</th>
+                      <th className="px-6 py-4">Total Amount</th>
+                      <th className="px-6 py-4">Mode</th>
+                      <th className="px-6 py-4">Processed Date</th>
+                      <th className="px-6 py-4">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5 text-xs">
+                    {payments.length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
+                          No payment transactions recorded in log ledger.
+                        </td>
+                      </tr>
+                    ) : (
+                      payments.map((pay) => (
+                        <tr key={pay.id} className="hover:bg-white/[0.01] transition-all">
+                          <td className="px-6 py-4 font-mono font-bold text-white">
+                            {pay.referenceNo || 'MANUAL-ACT'}
+                          </td>
+                          <td className="px-6 py-4 font-semibold text-gray-300">
+                            {pay.restaurant?.name || 'Unknown'}
+                          </td>
+                          <td className="px-6 py-4 font-mono">${pay.amount.toFixed(2)}</td>
+                          <td className="px-6 py-4 font-mono text-gray-500">${(pay.gstAmount || 0).toFixed(2)}</td>
+                          <td className="px-6 py-4 font-mono font-bold text-emerald-400">
+                            ${(pay.amount + (pay.gstAmount || 0)).toFixed(2)}
+                          </td>
+                          <td className="px-6 py-4 font-bold text-gray-400 text-[10px]">
+                            {pay.paymentMode}
+                          </td>
+                          <td className="px-6 py-4 text-gray-500 font-mono">
+                            {new Date(pay.createdAt).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4">
+                            <Badge variant={pay.status === 'VERIFIED' ? 'success' : pay.status === 'PENDING' ? 'warning' : 'error'}>
+                              {pay.status}
+                            </Badge>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </Card>
+            </div>
+          )}
+
+          {/* TAB 5: THEME MARKETPLACE */}
+          {activeTab === 'themes' && (
+            <div className="space-y-6 text-left">
+              <div>
+                <h2 className="font-serif text-xl font-bold text-white">Theme Marketplace Publisher</h2>
+                <p className="text-gray-400 text-xs mt-0.5">Control layout tiers, featured tags, and versions compatibility.</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {[
+                  { key: 'LUXURY_DARK', name: 'Luxury Fine Dining', tier: 'STARTER', desc: 'Gold on Deep Black theme, elegant serif headings.', version: '1.0.2', status: 'PUBLISHED', designer: 'Antigravity Creative' },
+                  { key: 'MINIMAL_JAPANESE', name: 'Japanese Minimal', tier: 'STARTER', desc: 'Zen style minimal layout with borderless cards.', version: '1.0.0', status: 'PUBLISHED', designer: 'Antigravity Creative' },
+                  { key: 'MODERN_CAFE', name: 'Modern Cafe', tier: 'PROFESSIONAL', desc: 'Warm coffee tones, rounded cards, friendly fonts.', version: '1.1.0', status: 'PUBLISHED', designer: 'Antigravity Creative' },
+                  { key: 'ITALIAN_BISTRO', name: 'Italian Bistro', tier: 'PROFESSIONAL', desc: 'Warm beige backdrop, deep wine red accents.', version: '1.0.1', status: 'PUBLISHED', designer: 'Antigravity Creative' },
+                  { key: 'TRADITIONAL_INDIAN', name: 'Traditional Indian', tier: 'PREMIUM', desc: 'Rich maroon backdrop, saffron gold highlights.', version: '1.0.0', status: 'PUBLISHED', designer: 'Antigravity Creative' },
+                  { key: 'BEACH_RESTAURANT', name: 'Beach Restaurant', tier: 'PREMIUM', desc: 'Ocean teal & sand colors, relaxed photo grid.', version: '1.2.1', status: 'PUBLISHED', designer: 'Antigravity Creative' }
+                ].map((theme) => (
+                  <Card key={theme.key} className="p-5 flex flex-col justify-between gap-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Badge variant="gold">{theme.tier}</Badge>
+                        <span className="text-[10px] text-gray-500 font-mono">v{theme.version}</span>
+                      </div>
+                      <h4 className="font-serif font-bold text-white text-base">{theme.name}</h4>
+                      <p className="text-[11px] text-gray-400 leading-normal">{theme.desc}</p>
+                      <div className="border-t border-white/5 pt-2 flex justify-between text-[10px] text-gray-500">
+                        <span>Designer: {theme.designer}</span>
+                        <span className="text-emerald-400 font-bold">{theme.status}</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="secondary" size="sm" className="flex-1 h-8" onClick={() => alert('Editing theme templates is a Developer function. Config parameters locked.')}>
+                        Configure Tiers
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-8 text-red-400 hover:text-red-500" onClick={() => alert('Theme template published state locked in registry.')}>
+                        Hide
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 6: PLAN CONFIGURATOR */}
+          {activeTab === 'plans' && (
+            <div className="space-y-6 text-left">
+              <div>
+                <h2 className="font-serif text-xl font-bold text-white">Plan Configurator</h2>
+                <p className="text-gray-400 text-xs mt-0.5">Adjust MRR cycles cost, allowed dining area caps, and premium theme features.</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {plans.map((p) => (
+                  <Card key={p.id} className="p-5 flex flex-col justify-between gap-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-bold text-white uppercase tracking-wider">{p.name}</h4>
+                        <span className="text-lg font-serif font-bold text-[#D4A437]">${p.price}/mo</span>
+                      </div>
+                      <p className="text-[11px] text-gray-400 leading-relaxed min-h-[33px]">{p.description}</p>
+                      
+                      <div className="border-t border-white/5 my-2" />
+                      
+                      <div className="space-y-1.5 text-xs text-gray-300 font-mono">
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Quarterly Cost:</span>
+                          <span className="text-white">${p.billingCycleQuarterlyCost || 0}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Yearly Cost:</span>
+                          <span className="text-white">${p.billingCycleYearlyCost || 0}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Dining Areas Cap:</span>
+                          <span className="text-white">{p.diningAreasAllowed}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">QR Layout templates:</span>
+                          <span className="text-white">{p.qrCodesAllowed}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">File Storage limit:</span>
+                          <span className="text-white">{p.storageGb} GB</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Support Priority:</span>
+                          <span className="text-white">{p.supportLevel}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="w-full h-9"
+                      onClick={() => setEditingPlan(p)}
+                    >
+                      Edit Config Limits
+                    </Button>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 7: SYSTEM CONFIGURATION */}
+          {activeTab === 'settings' && (
+            <div className="space-y-6 text-left max-w-xl">
+              <div>
+                <h2 className="font-serif text-xl font-bold text-white">Platform System Settings</h2>
+                <p className="text-gray-400 text-xs mt-0.5">Manage gateways, default taxes, currencies, and invoice templates.</p>
+              </div>
+
+              <Card className="p-6 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <Input
+                    label="Company Name"
+                    value={systemSettings.companyName || ''}
+                    onChange={(e) => setSystemSettings({ ...systemSettings, companyName: e.target.value })}
+                  />
+                  <Input
+                    label="GST Identification Number"
+                    value={systemSettings.gstNumber || ''}
+                    onChange={(e) => setSystemSettings({ ...systemSettings, gstNumber: e.target.value })}
+                  />
+                  <Input
+                    label="Currency Code"
+                    value={systemSettings.currency || ''}
+                    onChange={(e) => setSystemSettings({ ...systemSettings, currency: e.target.value })}
+                  />
+                  <Input
+                    label="Currency Symbol"
+                    value={systemSettings.currencySymbol || ''}
+                    onChange={(e) => setSystemSettings({ ...systemSettings, currencySymbol: e.target.value })}
+                  />
+                </div>
+
+                <div className="border-t border-white/5 my-4" />
+
+                <div className="space-y-4">
+                  <Select
+                    label="SMS Gateway Endpoint"
+                    value={systemSettings.smsGateway || ''}
+                    onChange={(e) => setSystemSettings({ ...systemSettings, smsGateway: e.target.value })}
+                    options={[
+                      { value: 'twilio', label: 'Twilio Global API' },
+                      { value: 'msg91', label: 'MSG91 Gateway' }
+                    ]}
+                  />
+                  
+                  <Select
+                    label="WhatsApp Gateway Hook"
+                    value={systemSettings.whatsAppGateway || ''}
+                    onChange={(e) => setSystemSettings({ ...systemSettings, whatsAppGateway: e.target.value })}
+                    options={[
+                      { value: 'meta-api', label: 'Meta Cloud Business API' },
+                      { value: 'twilio-wa', label: 'Twilio WhatsApp Sandbox' }
+                    ]}
+                  />
+
+                  <Input
+                    label="Invoice Prefix"
+                    value={systemSettings.invoicePrefix || ''}
+                    onChange={(e) => setSystemSettings({ ...systemSettings, invoicePrefix: e.target.value })}
+                  />
+                </div>
+
+                <Button
+                  variant="primary"
+                  className="w-full mt-4"
+                  onClick={handleSaveSettings}
+                >
+                  Save Platform Configurations
+                </Button>
+              </Card>
+            </div>
+          )}
+
+          {/* TAB 8: COMPLIANCE AUDIT LOGS */}
+          {activeTab === 'logs' && (
+            <div className="space-y-6 text-left">
+              <div>
+                <h2 className="font-serif text-xl font-bold text-white">Compliance Audit Trail</h2>
+                <p className="text-gray-400 text-xs mt-0.5">Logging ledger reporting all modifications, upgrades, and suspensions.</p>
+              </div>
+
+              <Card className="overflow-hidden overflow-x-auto border-white/5">
+                <table className="w-full text-left border-collapse min-w-[700px]">
+                  <thead>
+                    <tr className="border-b border-white/5 bg-white/[0.01] text-[10px] font-bold text-gray-400 uppercase">
+                      <th className="px-6 py-4">Action</th>
+                      <th className="px-6 py-4">Log Details</th>
+                      <th className="px-6 py-4">Timestamp</th>
+                      <th className="px-6 py-4">Reason Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5 text-xs">
+                    {auditLogs.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
+                          No audit logs registered in trail database.
+                        </td>
+                      </tr>
+                    ) : (
+                      auditLogs.map((log) => (
+                        <tr key={log.id} className="hover:bg-white/[0.01] transition-all">
+                          <td className="px-6 py-4">
+                            <span className="font-mono text-white bg-white/5 px-2 py-1 rounded">
+                              {log.action}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-gray-300 max-w-sm leading-normal">
+                            {log.details}
+                          </td>
+                          <td className="px-6 py-4 text-gray-500 font-mono">
+                            {new Date(log.createdAt).toLocaleString()}
+                          </td>
+                          <td className="px-6 py-4 text-gray-400 italic">
+                            {log.reason || 'No admin notes recorded.'}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </Card>
+            </div>
+          )}
+
+        </main>
       </div>
 
-      {/* Stats row */}
-      {stats && (
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
-          <div className="glass p-6 rounded-2xl flex items-center justify-between">
-            <div>
-              <span className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Restaurants</span>
-              <h3 className="text-3xl font-bold mt-1 font-serif text-white">{stats.totalRestaurants}</h3>
-            </div>
-            <div className="p-3.5 rounded-xl bg-gray-950 border border-gray-900 text-[#D4A437]">
-              <Store className="w-5 h-5" />
-            </div>
+      {/* POPUP MODAL: VIEW PROOF IMAGE */}
+      {viewProofUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4">
+          <button
+            onClick={() => setViewProofUrl(null)}
+            className="absolute top-5 right-5 text-gray-400 hover:text-white text-xs font-bold bg-white/5 px-3 py-1.5 rounded-lg border border-white/5"
+          >
+            Close Proof
+          </button>
+          <div className="max-w-3xl max-h-[85vh] overflow-hidden rounded-2xl border border-white/10">
+            <img src={viewProofUrl} alt="Payment Receipt Proof" className="object-contain max-h-[80vh] w-full" />
           </div>
+        </div>
+      )}
 
-          <div className="glass p-6 rounded-2xl flex items-center justify-between">
-            <div>
-              <span className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Active Subs</span>
-              <h3 className="text-3xl font-bold mt-1 font-serif text-emerald-400">{stats.activeSubCount}</h3>
-            </div>
-            <div className="p-3.5 rounded-xl bg-gray-950 border border-gray-900 text-[#D4A437]">
-              <CheckCircle className="w-5 h-5" />
-            </div>
-          </div>
+      {/* SLIDE-OVER PANEL: PROCESS APPROVAL DETAILS */}
+      {activeApprovalReq && (
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/80 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md bg-zinc-950 border-l border-white/5 h-full p-6 flex flex-col justify-between text-left">
+            <div className="space-y-6 overflow-y-auto">
+              <div className="flex justify-between items-center">
+                <h3 className="font-serif text-lg font-bold text-white">Upgrade Request Detail</h3>
+                <button onClick={() => setActiveApprovalReq(null)} className="text-gray-500 hover:text-white">
+                  Close
+                </button>
+              </div>
 
-          <div className="glass p-6 rounded-2xl flex items-center justify-between">
-            <div>
-              <span className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Suspended</span>
-              <h3 className="text-3xl font-bold mt-1 font-serif text-red-400">{stats.suspendedCount}</h3>
-            </div>
-            <div className="p-3.5 rounded-xl bg-gray-950 border border-gray-900 text-[#D4A437]">
-              <AlertTriangle className="w-5 h-5" />
-            </div>
-          </div>
+              <div className="space-y-4 text-xs font-mono text-gray-300">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Restaurant:</span>
+                  <span className="text-white font-bold">{activeApprovalReq.restaurant?.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Requested Plan:</span>
+                  <span className="text-white font-bold">{activeApprovalReq.plan?.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Billing Cycle:</span>
+                  <span className="text-white font-bold">{activeApprovalReq.billingCycle}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Amount Due (USD):</span>
+                  <span className="text-[#D4A437] font-bold">${activeApprovalReq.amount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">UTR / Ref No:</span>
+                  <span className="text-white font-bold">{activeApprovalReq.referenceNo || 'None'}</span>
+                </div>
+              </div>
 
-          <div className="glass p-6 rounded-2xl flex items-center justify-between">
-            <div>
-              <span className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Total Dishes</span>
-              <h3 className="text-3xl font-bold mt-1 font-serif text-white">{stats.totalMenuItems}</h3>
+              {activeApprovalReq.paymentProof && (
+                <div className="space-y-2">
+                  <span className="block text-[10px] text-gray-500 font-bold uppercase tracking-wider">Payment Receipt Uploader</span>
+                  <div className="border border-white/5 rounded-xl overflow-hidden aspect-video bg-black flex items-center justify-center relative">
+                    <img src={activeApprovalReq.paymentProof} className="object-cover w-full h-full" />
+                    <button 
+                      onClick={() => setViewProofUrl(activeApprovalReq.paymentProof)}
+                      className="absolute bottom-2 right-2 px-2 py-1 rounded bg-black/60 text-white text-[10px] hover:bg-black/85"
+                    >
+                      Enlarge Proof
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <span className="block text-[10px] text-gray-500 font-bold uppercase tracking-wider">Verification Notes (Reason)</span>
+                <TextArea
+                  value={approvalNotes}
+                  onChange={(e) => setApprovalNotes(e.target.value)}
+                  placeholder="Enter reason for approval or rejection..."
+                  className="h-24"
+                />
+              </div>
             </div>
-            <div className="p-3.5 rounded-xl bg-gray-950 border border-gray-900 text-[#D4A437]">
-              <UtensilsCrossed className="w-5 h-5" />
+
+            <div className="flex gap-4 border-t border-white/5 pt-4">
+              <Button
+                variant="danger"
+                className="flex-1"
+                onClick={() => handleApproval('REJECT')}
+              >
+                Reject Request
+              </Button>
+              <Button
+                variant="primary"
+                className="flex-1"
+                onClick={() => handleApproval('APPROVE')}
+              >
+                Approve & Activate
+              </Button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Restaurants List Table */}
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <h2 className="font-serif text-2xl font-bold text-white">Registered Venues</h2>
-          
-          {/* Search bar */}
-          <div className="relative w-full sm:max-w-xs">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
-              <Search className="w-4 h-4" />
+      {/* EDIT LIMITS MODAL: PLAN CONFIG */}
+      {editingPlan && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md bg-zinc-950 border border-white/5 rounded-3xl p-6 relative flex flex-col gap-6 text-left max-h-[90vh] overflow-y-auto">
+            <div>
+              <h3 className="font-serif text-lg font-bold text-white">Edit Plan Parameters: {editingPlan.name}</h3>
+              <p className="text-gray-400 text-xs mt-1">Configure MRR pricing variables and system limits quotas.</p>
             </div>
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by restaurant or owner..."
-              className="w-full bg-[#0d0d0d] border border-gray-800 focus:border-[#D4A437] focus:ring-1 focus:ring-[#D4A437] rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-gray-600 focus:outline-none transition-all"
-            />
+
+            <button onClick={() => setEditingPlan(null)} className="absolute top-5 right-5 text-gray-500 hover:text-white">
+              Close
+            </button>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="Monthly price ($)"
+                type="number"
+                value={editingPlan.price}
+                onChange={(e) => setEditingPlan({ ...editingPlan, price: parseFloat(e.target.value) })}
+              />
+              <Input
+                label="Quarterly price ($)"
+                type="number"
+                value={editingPlan.billingCycleQuarterlyCost}
+                onChange={(e) => setEditingPlan({ ...editingPlan, billingCycleQuarterlyCost: parseFloat(e.target.value) })}
+              />
+              <Input
+                label="Yearly price ($)"
+                type="number"
+                value={editingPlan.billingCycleYearlyCost}
+                onChange={(e) => setEditingPlan({ ...editingPlan, billingCycleYearlyCost: parseFloat(e.target.value) })}
+              />
+              <Input
+                label="Dining Areas limit"
+                type="number"
+                value={editingPlan.diningAreasAllowed}
+                onChange={(e) => setEditingPlan({ ...editingPlan, diningAreasAllowed: parseInt(e.target.value) })}
+              />
+              <Input
+                label="QR Codes templates"
+                type="number"
+                value={editingPlan.qrCodesAllowed}
+                onChange={(e) => setEditingPlan({ ...editingPlan, qrCodesAllowed: parseInt(e.target.value) })}
+              />
+              <Input
+                label="Storage limits (GB)"
+                type="number"
+                value={editingPlan.storageGb}
+                onChange={(e) => setEditingPlan({ ...editingPlan, storageGb: parseFloat(e.target.value) })}
+              />
+            </div>
+
+            <div className="space-y-4">
+              <Select
+                label="Support level priority"
+                value={editingPlan.supportLevel}
+                onChange={(e) => setEditingPlan({ ...editingPlan, supportLevel: e.target.value })}
+                options={[
+                  { value: 'Standard', label: 'Standard level support' },
+                  { value: 'Priority', label: 'Priority email support' },
+                  { value: '24/7 Premium', label: '24/7 Dedicated manager support' }
+                ]}
+              />
+
+              <div className="flex gap-2">
+                <input
+                  type="checkbox"
+                  id="premiumThemesAllowed"
+                  checked={editingPlan.premiumThemesAllowed}
+                  onChange={(e) => setEditingPlan({ ...editingPlan, premiumThemesAllowed: e.target.checked })}
+                  className="rounded border-white/5 bg-white/5 accent-[#D4A437]"
+                />
+                <label htmlFor="premiumThemesAllowed" className="text-xs text-gray-300 font-bold select-none cursor-pointer">
+                  Unlock Premium/Luxury layout marketplace
+                </label>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <Button variant="ghost" onClick={() => setEditingPlan(null)} className="flex-1">
+                Cancel
+              </Button>
+              <Button variant="primary" onClick={handleSavePlan} className="flex-1">
+                Save Parameters
+              </Button>
+            </div>
           </div>
         </div>
+      )}
 
-        <div className="glass rounded-3xl overflow-hidden overflow-x-auto border-gray-850">
-          <table className="w-full text-left border-collapse min-w-[800px]">
-            <thead>
-              <tr className="border-b border-gray-900 bg-gray-950/40 text-xs font-semibold text-gray-400 uppercase">
-                <th className="px-6 py-4.5">Restaurant Details</th>
-                <th className="px-6 py-4.5">Owner Contact</th>
-                <th className="px-6 py-4.5">Registered</th>
-                <th className="px-6 py-4.5 text-center">Dishes</th>
-                <th className="px-6 py-4.5">Plan Tier</th>
-                <th className="px-6 py-4.5">Status</th>
-                <th className="px-6 py-4.5 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-900/60 text-sm">
-              {filteredRestaurants.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
-                    No restaurants found matching your criteria.
-                  </td>
-                </tr>
-              ) : (
-                filteredRestaurants.map((res) => {
-                  const isSuspended = res.subStatus === 'CANCELLED';
-                  const dateFormatted = new Date(res.createdAt).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                  });
-
-                  return (
-                    <tr key={res.id} className="hover:bg-gray-950/20 transition-all">
-                      {/* Name & Slug */}
-                      <td className="px-6 py-4">
-                        <div className="font-bold text-white">{res.name}</div>
-                        <Link
-                          href={`/r/${res.slug}`}
-                          target="_blank"
-                          className="text-xs text-[#D4A437] hover:underline inline-flex items-center gap-0.5 mt-0.5"
-                        >
-                          /r/{res.slug} <ArrowRight className="w-2.5 h-2.5" />
-                        </Link>
-                      </td>
-                      
-                      {/* Owner details */}
-                      <td className="px-6 py-4">
-                        <div className="font-medium text-gray-200">{res.ownerName}</div>
-                        <div className="text-xs text-gray-500">{res.ownerEmail}</div>
-                      </td>
-
-                      {/* Date created */}
-                      <td className="px-6 py-4 text-gray-300 text-xs">
-                        {dateFormatted}
-                      </td>
-
-                      {/* Total dishes */}
-                      <td className="px-6 py-4 text-center text-gray-200 font-semibold">
-                        {res.dishesCount}
-                      </td>
-
-                      {/* Plan */}
-                      <td className="px-6 py-4 text-xs font-semibold text-gray-300">
-                        {res.planName}
-                      </td>
-
-                      {/* Status */}
-                      <td className="px-6 py-4">
-                        <span
-                          className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                            isSuspended
-                              ? 'bg-red-500/10 border border-red-500/20 text-red-400'
-                              : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
-                          }`}
-                        >
-                          {isSuspended ? 'Suspended' : 'Active'}
-                        </span>
-                      </td>
-
-                      {/* Actions */}
-                      <td className="px-6 py-4 text-right">
-                        {actionLoadingId === res.id ? (
-                          <Loader2 className="w-5 h-5 animate-spin text-gray-500 ml-auto" />
-                        ) : isSuspended ? (
-                          <button
-                            onClick={() => handleAction(res.id, 'approve')}
-                            className="px-3.5 py-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 text-xs font-bold transition-all cursor-pointer"
-                          >
-                            Approve
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleAction(res.id, 'suspend')}
-                            className="px-3.5 py-1.5 rounded-lg border border-red-500/20 bg-red-500/10 text-red-400 hover:bg-red-500/20 text-xs font-bold transition-all cursor-pointer"
-                          >
-                            Suspend
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
     </div>
   );
 }

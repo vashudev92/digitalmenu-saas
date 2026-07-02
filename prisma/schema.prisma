@@ -68,6 +68,8 @@ model Restaurant {
   menuProfiles   MenuProfile[]
   qrCodes        QRCode[]
   subscription   Subscription?
+  upgradeRequests UpgradeRequest[]
+  payments       Payment[]
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 }
@@ -147,14 +149,23 @@ model QRCode {
 }
 
 model Plan {
-  id            String         @id @default(uuid())
-  name          String         @unique // e.g. Free, Premium, Luxury
-  price         Float
-  description   String?
-  features      String[]       // List of features
-  subscriptions Subscription[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  id                         String         @id @default(uuid())
+  name                       String         @unique // e.g. Free, Premium, Luxury
+  price                      Float
+  description                String?
+  features                   String[]       // List of features
+  diningAreasAllowed         Int            @default(1)
+  qrCodesAllowed             Int            @default(1)
+  galleryImagesAllowed       Int            @default(5)
+  premiumThemesAllowed       Boolean        @default(false)
+  storageGb                  Float          @default(1.0)
+  supportLevel               String         @default("Standard")
+  billingCycleQuarterlyCost  Float          @default(0.0)
+  billingCycleYearlyCost     Float          @default(0.0)
+  subscriptions              Subscription[]
+  upgradeRequests            UpgradeRequest[]
+  createdAt                  DateTime       @default(now())
+  updatedAt                  DateTime       @updatedAt
 }
 
 model Subscription {
@@ -164,6 +175,7 @@ model Subscription {
   restaurant   Restaurant         @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   planId       String
   plan         Plan               @relation(fields: [planId], references: [id])
+  billingCycle String             @default("MONTHLY") // MONTHLY, QUARTERLY, YEARLY
   startDate    DateTime           @default(now())
   endDate      DateTime
   createdAt    DateTime           @default(now())
@@ -182,4 +194,45 @@ model Theme {
   status       String   @default("PUBLISHED") // PUBLISHED | DISABLED | ARCHIVED
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model UpgradeRequest {
+  id            String     @id @default(uuid())
+  restaurantId  String
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  planId        String
+  plan          Plan       @relation(fields: [planId], references: [id])
+  billingCycle  String     // MONTHLY, QUARTERLY, YEARLY
+  amount        Float
+  paymentProof  String?    @db.Text // Base64 or URL
+  referenceNo   String?
+  status        String     @default("PENDING") // PENDING, APPROVED, REJECTED
+  adminNotes    String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model Payment {
+  id              String     @id @default(uuid())
+  restaurantId    String
+  restaurant      Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  amount          Float
+  gstAmount       Float      @default(0.0)
+  paymentMode     String     // MANUAL, ONLINE, BANK_TRANSFER
+  transactionId   String?
+  referenceNo     String?
+  status          String     @default("PENDING") // PENDING, VERIFIED, FAILED, REFUNDED
+  proofAttachment String?    @db.Text
+  adminNotes      String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+}
+
+model AuditLog {
+  id            String     @id @default(uuid())
+  action        String
+  details       String?
+  adminId       String?
+  reason        String?
+  createdAt     DateTime   @default(now())
 }

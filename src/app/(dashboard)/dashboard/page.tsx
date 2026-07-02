@@ -1,6 +1,7 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { db } from '@/lib/db';
 import Link from 'next/link';
 import { 
@@ -27,8 +28,16 @@ export default async function DashboardPage() {
     redirect('/login');
   }
 
+  const cookieStore = await cookies();
+  const impersonateId = cookieStore.get('impersonate_restaurant_id')?.value;
+
+  let whereClause: any = { ownerId: session.user.id };
+  if (impersonateId && session.user.role === 'ADMIN') {
+    whereClause = { id: impersonateId };
+  }
+
   const restaurant = await db.restaurant.findUnique({
-    where: { ownerId: session.user.id },
+    where: whereClause,
     include: {
       _count: {
         select: {

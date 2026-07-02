@@ -424,6 +424,9 @@ async function main() {
   console.log('Seeding database...');
 
   // Clean Database
+  await prisma.auditLog.deleteMany();
+  await prisma.payment.deleteMany();
+  await prisma.upgradeRequest.deleteMany();
   await prisma.subscription.deleteMany();
   await prisma.qRCode.deleteMany();
   await prisma.menuItem.deleteMany();
@@ -503,13 +506,21 @@ async function main() {
   }
   console.log('Platform Theme Library seeded.');
 
-  // Create Plans
+  // Create Plans with extended limits
   const freePlan = await prisma.plan.create({
     data: {
       name: 'Free',
       price: 0,
       description: 'Perfect for small cafes to display a simple digital menu.',
       features: ['Up to 2 Categories', 'Up to 15 Menu Items', '1 QR Code Template (Table Tent)', 'Standard Theme'],
+      diningAreasAllowed: 1,
+      qrCodesAllowed: 1,
+      galleryImagesAllowed: 2,
+      premiumThemesAllowed: false,
+      storageGb: 0.5,
+      supportLevel: 'Standard',
+      billingCycleQuarterlyCost: 0,
+      billingCycleYearlyCost: 0,
     },
   });
 
@@ -525,6 +536,14 @@ async function main() {
         'Access to Cafe & Modern Themes',
         'Download PNG & PDF',
       ],
+      diningAreasAllowed: 3,
+      qrCodesAllowed: 3,
+      galleryImagesAllowed: 10,
+      premiumThemesAllowed: true,
+      storageGb: 5.0,
+      supportLevel: 'Priority',
+      billingCycleQuarterlyCost: 49,
+      billingCycleYearlyCost: 149,
     },
   });
 
@@ -540,6 +559,14 @@ async function main() {
         'Download PNG, SVG & PDF',
         'Priority Technical Support',
       ],
+      diningAreasAllowed: 10,
+      qrCodesAllowed: 10,
+      galleryImagesAllowed: 30,
+      premiumThemesAllowed: true,
+      storageGb: 20.0,
+      supportLevel: '24/7 Premium',
+      billingCycleQuarterlyCost: 129,
+      billingCycleYearlyCost: 399,
     },
   });
 

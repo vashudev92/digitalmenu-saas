@@ -17,8 +17,7 @@ function slugify(text: string): string {
     .replace(/-+$/, '');
 }
 
-// GET profile
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -26,8 +25,16 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { searchParams } = new URL(request.url);
+    const impersonateId = searchParams.get('impersonateId');
+
+    let whereClause: any = { ownerId: session.user.id };
+    if (impersonateId && session.user.role === 'ADMIN') {
+      whereClause = { id: impersonateId };
+    }
+
     const restaurant = await db.restaurant.findUnique({
-      where: { ownerId: session.user.id },
+      where: whereClause,
       include: { qrCodes: true, subscription: { include: { plan: true } } },
     });
 
@@ -88,9 +95,17 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'Restaurant Name is required' }, { status: 400 });
     }
 
+    const { searchParams } = new URL(request.url);
+    const impersonateId = searchParams.get('impersonateId');
+
+    let whereClause: any = { ownerId: session.user.id };
+    if (impersonateId && session.user.role === 'ADMIN') {
+      whereClause = { id: impersonateId };
+    }
+
     // Find the existing restaurant
     const restaurant = await db.restaurant.findUnique({
-      where: { ownerId: session.user.id },
+      where: whereClause,
     });
 
     if (!restaurant) {
@@ -109,7 +124,7 @@ export async function PUT(request: Request) {
       const existingWithSlug = await db.restaurant.findFirst({
         where: {
           slug: slugCandidate,
-          NOT: { ownerId: session.user.id },
+          NOT: { id: restaurant.id },
         },
       });
 
@@ -124,7 +139,7 @@ export async function PUT(request: Request) {
     // Perform database updates
     const updatedRestaurant = await db.$transaction(async (tx) => {
       const updated = await tx.restaurant.update({
-        where: { ownerId: session.user.id },
+        where: { id: restaurant.id },
         data: {
           name,
           slug: finalSlug,

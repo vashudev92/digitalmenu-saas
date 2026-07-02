@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
+import { cookies } from 'next/headers';
 import { db } from '@/lib/db';
 
 // GET all menu items for the user's restaurant
@@ -12,8 +13,17 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { searchParams } = new URL(request.url);
+    const cookieStore = await cookies();
+    const impersonateId = searchParams.get('impersonateId') || cookieStore.get('impersonate_restaurant_id')?.value;
+
+    let whereClause: any = { ownerId: session.user.id };
+    if (impersonateId && session.user.role === 'ADMIN') {
+      whereClause = { id: impersonateId };
+    }
+
     const restaurant = await db.restaurant.findUnique({
-      where: { ownerId: session.user.id },
+      where: whereClause,
     });
 
     if (!restaurant) {
@@ -21,7 +31,6 @@ export async function GET(request: Request) {
     }
 
     // Optional filter by menu profile
-    const { searchParams } = new URL(request.url);
     const menuProfileId = searchParams.get('menuProfileId');
 
     const where: any = { restaurantId: restaurant.id };
@@ -56,8 +65,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { searchParams } = new URL(request.url);
+    const cookieStore = await cookies();
+    const impersonateId = searchParams.get('impersonateId') || cookieStore.get('impersonate_restaurant_id')?.value;
+
+    let whereClause: any = { ownerId: session.user.id };
+    if (impersonateId && session.user.role === 'ADMIN') {
+      whereClause = { id: impersonateId };
+    }
+
     const restaurant = await db.restaurant.findUnique({
-      where: { ownerId: session.user.id },
+      where: whereClause,
     });
 
     if (!restaurant) {
@@ -113,8 +131,17 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { searchParams } = new URL(request.url);
+    const cookieStore = await cookies();
+    const impersonateId = searchParams.get('impersonateId') || cookieStore.get('impersonate_restaurant_id')?.value;
+
+    let whereClause: any = { ownerId: session.user.id };
+    if (impersonateId && session.user.role === 'ADMIN') {
+      whereClause = { id: impersonateId };
+    }
+
     const restaurant = await db.restaurant.findUnique({
-      where: { ownerId: session.user.id },
+      where: whereClause,
     });
 
     if (!restaurant) {
@@ -172,15 +199,23 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { searchParams } = new URL(request.url);
+    const cookieStore = await cookies();
+    const impersonateId = searchParams.get('impersonateId') || cookieStore.get('impersonate_restaurant_id')?.value;
+
+    let whereClause: any = { ownerId: session.user.id };
+    if (impersonateId && session.user.role === 'ADMIN') {
+      whereClause = { id: impersonateId };
+    }
+
     const restaurant = await db.restaurant.findUnique({
-      where: { ownerId: session.user.id },
+      where: whereClause,
     });
 
     if (!restaurant) {
       return NextResponse.json({ error: 'Restaurant not found' }, { status: 404 });
     }
 
-    const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
     if (!id) {

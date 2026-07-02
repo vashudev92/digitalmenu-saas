@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
+import { cookies } from 'next/headers';
 import { db } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
@@ -13,8 +14,16 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const cookieStore = await cookies();
+    const impersonateId = cookieStore.get('impersonate_restaurant_id')?.value;
+
+    let whereClause: any = { ownerId: session.user.id };
+    if (impersonateId && session.user.role === 'ADMIN') {
+      whereClause = { id: impersonateId };
+    }
+
     const restaurant = await db.restaurant.findUnique({
-      where: { ownerId: session.user.id },
+      where: whereClause,
       select: { id: true },
     });
 
@@ -53,8 +62,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const cookieStore = await cookies();
+    const impersonateId = cookieStore.get('impersonate_restaurant_id')?.value;
+
+    let whereClause: any = { ownerId: session.user.id };
+    if (impersonateId && session.user.role === 'ADMIN') {
+      whereClause = { id: impersonateId };
+    }
+
     const restaurant = await db.restaurant.findUnique({
-      where: { ownerId: session.user.id },
+      where: whereClause,
       select: { id: true },
     });
 
