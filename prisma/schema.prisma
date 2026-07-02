@@ -192,6 +192,11 @@ model Theme {
   tier         String   @default("STARTER") // STARTER | PROFESSIONAL | PREMIUM
   monthlyCost  Float    @default(0.0)
   status       String   @default("PUBLISHED") // PUBLISHED | DISABLED | ARCHIVED
+  bg           String   @default("#0D0D0F")
+  text         String   @default("#FFFFFF")
+  accent       String   @default("#D4A853")
+  fontHeading  String   @default("Playfair Display")
+  fontBody     String   @default("Inter")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }

@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { key, name, previewImage, description, version, tier, monthlyCost, status } = body;
+    const { key, name, previewImage, description, version, tier, monthlyCost, status, bg, text, accent, fontHeading, fontBody } = body;
 
     if (!key || !name) {
       return NextResponse.json({ error: 'Key and Name are required' }, { status: 400 });
@@ -56,6 +56,11 @@ export async function POST(request: Request) {
         tier: tier || 'STARTER',
         monthlyCost: parseFloat(monthlyCost) || 0.0,
         status: status || 'PUBLISHED',
+        bg: bg || '#0D0D0F',
+        text: text || '#FFFFFF',
+        accent: accent || '#D4A853',
+        fontHeading: fontHeading || 'Playfair Display',
+        fontBody: fontBody || 'Inter',
       },
     });
 
@@ -75,7 +80,7 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
-    const { id, name, previewImage, description, version, tier, monthlyCost, status } = body;
+    const { id, name, previewImage, description, version, tier, monthlyCost, status, bg, text, accent, fontHeading, fontBody } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'Theme ID is required' }, { status: 400 });
@@ -91,6 +96,11 @@ export async function PUT(request: Request) {
         ...(tier !== undefined && { tier }),
         ...(monthlyCost !== undefined && { monthlyCost: parseFloat(monthlyCost) }),
         ...(status !== undefined && { status }),
+        ...(bg !== undefined && { bg }),
+        ...(text !== undefined && { text }),
+        ...(accent !== undefined && { accent }),
+        ...(fontHeading !== undefined && { fontHeading }),
+        ...(fontBody !== undefined && { fontBody }),
       },
     });
 

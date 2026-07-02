@@ -443,11 +443,16 @@ async function main() {
       key: 'LUXURY_DARK',
       name: 'Luxury Fine Dining',
       description: 'Gold highlights on deep black, elegant serif headings and thin double gold borders',
-      version: '1.0.0',
+      version: '1.0.2',
       tier: 'STARTER',
       monthlyCost: 0.0,
       status: 'PUBLISHED',
-      previewImage: 'https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=600&fit=crop'
+      previewImage: 'https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=600&fit=crop',
+      bg: '#0D0D0F',
+      text: '#FFFFFF',
+      accent: '#D4A853',
+      fontHeading: 'Playfair Display',
+      fontBody: 'Inter'
     },
     {
       key: 'MINIMAL_JAPANESE',
@@ -457,27 +462,42 @@ async function main() {
       tier: 'STARTER',
       monthlyCost: 0.0,
       status: 'PUBLISHED',
-      previewImage: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?q=80&w=600&fit=crop'
+      previewImage: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?q=80&w=600&fit=crop',
+      bg: '#F6F4F0',
+      text: '#1A1A1A',
+      accent: '#C49B4A',
+      fontHeading: 'Libre Baskerville',
+      fontBody: 'DM Sans'
     },
     {
       key: 'MODERN_CAFE',
       name: 'Modern Cafe',
       description: 'Coffee colors, rounded cards, friendly typography, warm illustrations',
-      version: '1.0.0',
+      version: '1.1.0',
       tier: 'PROFESSIONAL',
       monthlyCost: 499.0,
       status: 'PUBLISHED',
-      previewImage: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?q=80&w=600&fit=crop'
+      previewImage: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?q=80&w=600&fit=crop',
+      bg: '#1B120F',
+      text: '#F4EBE1',
+      accent: '#E5BA73',
+      fontHeading: 'Poppins',
+      fontBody: 'Inter'
     },
     {
       key: 'ITALIAN_BISTRO',
       name: 'Italian Bistro',
       description: 'Warm beige backdrop, deep wine red highlights, rustic card frames',
-      version: '1.0.0',
+      version: '1.0.1',
       tier: 'PROFESSIONAL',
       monthlyCost: 499.0,
       status: 'PUBLISHED',
-      previewImage: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=600&fit=crop'
+      previewImage: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=600&fit=crop',
+      bg: '#FAF6EE',
+      text: '#2A201C',
+      accent: '#800020',
+      fontHeading: 'Montserrat',
+      fontBody: 'Raleway'
     },
     {
       key: 'TRADITIONAL_INDIAN',
@@ -487,17 +507,27 @@ async function main() {
       tier: 'PREMIUM',
       monthlyCost: 999.0,
       status: 'PUBLISHED',
-      previewImage: 'https://images.unsplash.com/photo-1585938338392-50a59970d8ee?q=80&w=600&fit=crop'
+      previewImage: 'https://images.unsplash.com/photo-1585938338392-50a59970d8ee?q=80&w=600&fit=crop',
+      bg: '#2D0B0A',
+      text: '#FFF8F0',
+      accent: '#E6A15C',
+      fontHeading: 'Playfair Display',
+      fontBody: 'Inter'
     },
     {
       key: 'BEACH_RESTAURANT',
       name: 'Beach Restaurant',
       description: 'Ocean teal & sand colors, relaxed spacing, photo-first layouts',
-      version: '1.0.0',
+      version: '1.2.1',
       tier: 'PREMIUM',
       monthlyCost: 999.0,
       status: 'PUBLISHED',
-      previewImage: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=600&fit=crop'
+      previewImage: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=600&fit=crop',
+      bg: '#E0F2F1',
+      text: '#004D40',
+      accent: '#FF8A80',
+      fontHeading: 'Lora',
+      fontBody: 'Nunito'
     }
   ];
 

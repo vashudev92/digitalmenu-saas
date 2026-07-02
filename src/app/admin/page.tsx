@@ -33,7 +33,8 @@ import {
   FileCheck,
   ChevronRight,
   Check,
-  UserCheck
+  UserCheck,
+  X
 } from 'lucide-react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
@@ -133,11 +134,32 @@ export default function AdminPage() {
   const [notifications, setNotifications] = useState<SystemNotification[]>([]);
   const [plans, setPlans] = useState<any[]>([]);
   const [systemSettings, setSystemSettings] = useState<any>({});
+  const [themes, setThemes] = useState<any[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+
+  // Subscription Edit Modal States
+  const [activeSubModalRes, setActiveSubModalRes] = useState<any | null>(null);
+  const [subPlanId, setSubPlanId] = useState('');
+  const [subStatus, setSubStatus] = useState('ACTIVE');
+  const [subEndDate, setSubEndDate] = useState('');
+
+  // Theme Marketplace Config States
+  const [activeThemeModal, setActiveThemeModal] = useState<any | null>(null); // 'NEW' or theme object
+  const [themeName, setThemeName] = useState('');
+  const [themeKey, setThemeKey] = useState('');
+  const [themeDesc, setThemeDesc] = useState('');
+  const [themeVersion, setThemeVersion] = useState('1.0.0');
+  const [themeTier, setThemeTier] = useState('STARTER');
+  const [themeStatus, setThemeStatus] = useState('PUBLISHED');
+  const [themeBg, setThemeBg] = useState('#0D0D0F');
+  const [themeText, setThemeText] = useState('#FFFFFF');
+  const [themeAccent, setThemeAccent] = useState('#D4A853');
+  const [themeFontHeading, setThemeFontHeading] = useState('Playfair Display');
+  const [themeFontBody, setThemeFontBody] = useState('Inter');
 
   // Modals & Slide-Overs
   const [viewProofUrl, setViewProofUrl] = useState<string | null>(null);
@@ -175,6 +197,11 @@ export default function AdminPage() {
       const resSettings = await fetch('/api/admin/settings');
       const settingsData = await resSettings.json();
       setSystemSettings(settingsData.settings || {});
+
+      // Load themes
+      const resThemes = await fetch('/api/admin/themes');
+      const themesData = await resThemes.json();
+      setThemes(themesData.themes || []);
     } catch (err) {
       setError('Could not fetch administrator analytics.');
     } finally {
@@ -202,6 +229,132 @@ export default function AdminPage() {
     document.cookie = `impersonate_restaurant_id=${restaurantId}; path=/`;
     document.cookie = `impersonate_restaurant_slug=${slug}; path=/`;
     router.push('/dashboard');
+  };
+
+  // Save subscription change
+  const handleSaveSubscription = async () => {
+    if (!activeSubModalRes || !subPlanId) return;
+    try {
+      setActionLoadingId(activeSubModalRes.id);
+      const res = await fetch('/api/admin/change-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          restaurantId: activeSubModalRes.id,
+          planId: subPlanId,
+          status: subStatus,
+          endDate: subEndDate,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to update subscription');
+      
+      alert('Subscription plan updated successfully!');
+      setActiveSubModalRes(null);
+      loadData();
+    } catch (err: any) {
+      alert(err.message || 'Error updating subscription');
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  // Open theme modal for creation
+  const handleOpenNewThemeModal = () => {
+    setActiveThemeModal('NEW');
+    setThemeName('');
+    setThemeKey('');
+    setThemeDesc('');
+    setThemeVersion('1.0.0');
+    setThemeTier('STARTER');
+    setThemeStatus('PUBLISHED');
+    setThemeBg('#0D0D0F');
+    setThemeText('#FFFFFF');
+    setThemeAccent('#D4A853');
+    setThemeFontHeading('Playfair Display');
+    setThemeFontBody('Inter');
+  };
+
+  // Open theme modal for editing
+  const handleOpenEditThemeModal = (theme: any) => {
+    setActiveThemeModal(theme);
+    setThemeName(theme.name);
+    setThemeKey(theme.key);
+    setThemeDesc(theme.description || '');
+    setThemeVersion(theme.version || '1.0.0');
+    setThemeTier(theme.tier || 'STARTER');
+    setThemeStatus(theme.status || 'PUBLISHED');
+    setThemeBg(theme.bg || '#0D0D0F');
+    setThemeText(theme.text || '#FFFFFF');
+    setThemeAccent(theme.accent || '#D4A853');
+    setThemeFontHeading(theme.fontHeading || 'Playfair Display');
+    setThemeFontBody(theme.fontBody || 'Inter');
+  };
+
+  // Save layout theme details (create / update)
+  const handleSaveTheme = async () => {
+    if (!themeName || !themeKey) {
+      alert('Theme Name and Key are required.');
+      return;
+    }
+    try {
+      const isNew = activeThemeModal === 'NEW';
+      const url = '/api/admin/themes';
+      const method = isNew ? 'POST' : 'PUT';
+      
+      const body: any = {
+        name: themeName,
+        description: themeDesc,
+        version: themeVersion,
+        tier: themeTier,
+        status: themeStatus,
+        bg: themeBg,
+        text: themeText,
+        accent: themeAccent,
+        fontHeading: themeFontHeading,
+        fontBody: themeFontBody,
+      };
+
+      if (isNew) {
+        body.key = themeKey.toUpperCase().replace(/[\s-]/g, '_');
+      } else {
+        body.id = activeThemeModal.id;
+      }
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to save theme layout');
+
+      alert(`Theme layout ${isNew ? 'published' : 'updated'} successfully!`);
+      setActiveThemeModal(null);
+      loadData();
+    } catch (err: any) {
+      alert(err.message || 'Error saving theme');
+    }
+  };
+
+  // Delete custom theme layout
+  const handleDeleteTheme = async (themeId: string) => {
+    if (!confirm('Are you sure you want to remove this theme layout? All restaurants currently using it will fallback to the default styling.')) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/admin/themes?id=${themeId}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to remove theme layout');
+
+      alert('Theme layout deleted successfully.');
+      loadData();
+    } catch (err: any) {
+      alert(err.message || 'Error deleting theme');
+    }
   };
 
   // Process Upgrade Request
@@ -547,16 +700,20 @@ export default function AdminPage() {
                     <p className="text-[10px] text-gray-500">Cumulative platform registrations.</p>
                   </div>
                   <div className="h-44 w-full flex items-end justify-between pt-4 border-b border-white/5 font-mono text-[9px] text-gray-600">
-                    {monthlyStats.map((item, idx) => (
-                      <div key={idx} className="flex flex-col items-center gap-2 flex-1">
-                        <span className="text-white font-bold">{item.registrations}</span>
-                        <div 
-                          className="w-8 bg-[#D4A437]/20 border-t border-[#D4A437] rounded-t-md transition-all duration-500 hover:bg-[#D4A437]/40"
-                          style={{ height: `${(item.registrations / (stats?.totalRestaurants || 10)) * 100}px` }}
-                        />
-                        <span className="mt-1">{item.month}</span>
-                      </div>
-                    ))}
+                    {monthlyStats.map((item, idx) => {
+                      const maxRegs = Math.max(...monthlyStats.map(m => m.registrations), 1);
+                      const barHeightPercent = (item.registrations / maxRegs) * 80;
+                      return (
+                        <div key={idx} className="flex flex-col items-center justify-end h-full gap-1.5 flex-1 pb-1">
+                          <span className="text-white font-bold">{item.registrations}</span>
+                          <div 
+                            className="w-8 bg-[#D4A437]/20 border-t border-[#D4A437] rounded-t-md transition-all duration-300 hover:bg-[#D4A437]/40"
+                            style={{ height: `${barHeightPercent}%` }}
+                          />
+                          <span className="mt-1">{item.month}</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </Card>
 
@@ -566,16 +723,20 @@ export default function AdminPage() {
                     <p className="text-[10px] text-gray-500">Verified platform payments ledger totals.</p>
                   </div>
                   <div className="h-44 w-full flex items-end justify-between pt-4 border-b border-white/5 font-mono text-[9px] text-gray-600">
-                    {monthlyStats.map((item, idx) => (
-                      <div key={idx} className="flex flex-col items-center gap-2 flex-1">
-                        <span className="text-emerald-400 font-bold">${item.revenue}</span>
-                        <div 
-                          className="w-8 bg-emerald-500/20 border-t border-emerald-500 rounded-t-md transition-all duration-500 hover:bg-emerald-500/40"
-                          style={{ height: `${(item.revenue / (stats?.totalRevenue || 500)) * 100}px` }}
-                        />
-                        <span className="mt-1">{item.month}</span>
-                      </div>
-                    ))}
+                    {monthlyStats.map((item, idx) => {
+                      const maxRev = Math.max(...monthlyStats.map(m => m.revenue), 1);
+                      const barHeightPercent = (item.revenue / maxRev) * 80;
+                      return (
+                        <div key={idx} className="flex flex-col items-center justify-end h-full gap-1.5 flex-1 pb-1">
+                          <span className="text-emerald-400 font-bold">${item.revenue}</span>
+                          <div 
+                            className="w-8 bg-emerald-500/20 border-t border-emerald-500 rounded-t-md transition-all duration-300 hover:bg-emerald-500/40"
+                            style={{ height: `${barHeightPercent}%` }}
+                          />
+                          <span className="mt-1">{item.month}</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </Card>
               </div>
@@ -693,6 +854,21 @@ export default function AdminPage() {
                             </td>
 
                             <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap">
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => {
+                                  setActiveSubModalRes(res);
+                                  const matchingPlan = plans.find(p => p.name === res.planName);
+                                  setSubPlanId(matchingPlan?.id || '');
+                                  setSubStatus(res.subStatus || 'ACTIVE');
+                                  setSubEndDate(res.expiryDate ? new Date(res.expiryDate).toISOString().split('T')[0] : '');
+                                }}
+                                className="h-8 gap-1.5"
+                              >
+                                <Sliders className="w-3.5 h-3.5 text-[#D4A853]" /> Edit Plan
+                              </Button>
+
                               <Button
                                 variant="secondary"
                                 size="sm"
@@ -877,39 +1053,69 @@ export default function AdminPage() {
           {/* TAB 5: THEME MARKETPLACE */}
           {activeTab === 'themes' && (
             <div className="space-y-6 text-left">
-              <div>
-                <h2 className="font-serif text-xl font-bold text-white">Theme Marketplace Publisher</h2>
-                <p className="text-gray-400 text-xs mt-0.5">Control layout tiers, featured tags, and versions compatibility.</p>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="font-serif text-xl font-bold text-white">Theme Marketplace Publisher</h2>
+                  <p className="text-gray-400 text-xs mt-0.5">Control layout tiers, brand colors, fonts compatibility, and custom themes.</p>
+                </div>
+                <Button variant="primary" size="sm" onClick={handleOpenNewThemeModal} className="h-9 gap-1.5 shrink-0 self-start sm:self-center">
+                  <Plus className="w-4 h-4 text-black font-bold" /> Publish Custom Theme
+                </Button>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {[
-                  { key: 'LUXURY_DARK', name: 'Luxury Fine Dining', tier: 'STARTER', desc: 'Gold on Deep Black theme, elegant serif headings.', version: '1.0.2', status: 'PUBLISHED', designer: 'Antigravity Creative' },
-                  { key: 'MINIMAL_JAPANESE', name: 'Japanese Minimal', tier: 'STARTER', desc: 'Zen style minimal layout with borderless cards.', version: '1.0.0', status: 'PUBLISHED', designer: 'Antigravity Creative' },
-                  { key: 'MODERN_CAFE', name: 'Modern Cafe', tier: 'PROFESSIONAL', desc: 'Warm coffee tones, rounded cards, friendly fonts.', version: '1.1.0', status: 'PUBLISHED', designer: 'Antigravity Creative' },
-                  { key: 'ITALIAN_BISTRO', name: 'Italian Bistro', tier: 'PROFESSIONAL', desc: 'Warm beige backdrop, deep wine red accents.', version: '1.0.1', status: 'PUBLISHED', designer: 'Antigravity Creative' },
-                  { key: 'TRADITIONAL_INDIAN', name: 'Traditional Indian', tier: 'PREMIUM', desc: 'Rich maroon backdrop, saffron gold highlights.', version: '1.0.0', status: 'PUBLISHED', designer: 'Antigravity Creative' },
-                  { key: 'BEACH_RESTAURANT', name: 'Beach Restaurant', tier: 'PREMIUM', desc: 'Ocean teal & sand colors, relaxed photo grid.', version: '1.2.1', status: 'PUBLISHED', designer: 'Antigravity Creative' }
-                ].map((theme) => (
-                  <Card key={theme.key} className="p-5 flex flex-col justify-between gap-4">
-                    <div className="space-y-2">
+                {themes.map((theme) => (
+                  <Card key={theme.id} className="p-5 flex flex-col justify-between gap-4 relative overflow-hidden border border-white/[0.04]">
+                    {/* Visual Color Bar Indicator using Theme Colors */}
+                    <div className="absolute top-0 left-0 right-0 h-1.5 flex">
+                      <div className="flex-1" style={{ backgroundColor: theme.bg }} />
+                      <div className="flex-1" style={{ backgroundColor: theme.text }} />
+                      <div className="flex-1" style={{ backgroundColor: theme.accent }} />
+                    </div>
+
+                    <div className="space-y-3 pt-1">
                       <div className="flex items-center justify-between">
                         <Badge variant="gold">{theme.tier}</Badge>
                         <span className="text-[10px] text-gray-500 font-mono">v{theme.version}</span>
                       </div>
-                      <h4 className="font-serif font-bold text-white text-base">{theme.name}</h4>
-                      <p className="text-[11px] text-gray-400 leading-normal">{theme.desc}</p>
+                      
+                      <div>
+                        <h4 className="font-serif font-bold text-white text-base">{theme.name}</h4>
+                        <span className="text-[9px] text-gray-500 font-mono block mt-0.5 tracking-wider uppercase">{theme.key}</span>
+                      </div>
+
+                      <p className="text-[11px] text-gray-400 leading-normal min-h-[33px]">{theme.description || 'No description provided.'}</p>
+                      
+                      {/* Theme Colors & Fonts Spec Sheet */}
+                      <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-3 space-y-2 text-[10px]">
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-500">Typography:</span>
+                          <span className="text-white font-semibold truncate max-w-[120px]" style={{ fontFamily: theme.fontHeading }}>
+                            {theme.fontHeading} / {theme.fontBody}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-500">Brand Palette:</span>
+                          <div className="flex gap-1.5">
+                            <span className="w-3.5 h-3.5 rounded border border-white/20 block" title={`Background: ${theme.bg}`} style={{ backgroundColor: theme.bg }} />
+                            <span className="w-3.5 h-3.5 rounded border border-white/20 block" title={`Text: ${theme.text}`} style={{ backgroundColor: theme.text }} />
+                            <span className="w-3.5 h-3.5 rounded border border-white/20 block" title={`Accent: ${theme.accent}`} style={{ backgroundColor: theme.accent }} />
+                          </div>
+                        </div>
+                      </div>
+
                       <div className="border-t border-white/5 pt-2 flex justify-between text-[10px] text-gray-500">
-                        <span>Designer: {theme.designer}</span>
-                        <span className="text-emerald-400 font-bold">{theme.status}</span>
+                        <span>Status: <span className="text-emerald-400 font-bold">{theme.status}</span></span>
+                        <span>Cost: ${theme.monthlyCost.toFixed(2)}</span>
                       </div>
                     </div>
+                    
                     <div className="flex gap-2">
-                      <Button variant="secondary" size="sm" className="flex-1 h-8" onClick={() => alert('Editing theme templates is a Developer function. Config parameters locked.')}>
-                        Configure Tiers
+                      <Button variant="secondary" size="sm" className="flex-1 h-8" onClick={() => handleOpenEditThemeModal(theme)}>
+                        Configure details
                       </Button>
-                      <Button variant="ghost" size="sm" className="h-8 text-red-400 hover:text-red-500" onClick={() => alert('Theme template published state locked in registry.')}>
-                        Hide
+                      <Button variant="ghost" size="sm" className="h-8 text-red-400 hover:text-red-500" onClick={() => handleDeleteTheme(theme.id)}>
+                        Delete
                       </Button>
                     </div>
                   </Card>
@@ -1290,6 +1496,242 @@ export default function AdminPage() {
               </Button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* MODAL: EDIT RESTAURANT SUBSCRIPTION */}
+      {activeSubModalRes && (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+          <Card className="w-full max-w-md p-6 bg-[#0D0D0F] border border-white/[0.08] shadow-2xl relative space-y-4 text-left">
+            <button
+              onClick={() => setActiveSubModalRes(null)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            
+            <div>
+              <h3 className="font-serif text-lg font-bold text-white">Modify Restaurant Subscription</h3>
+              <p className="text-xs text-gray-400 mt-1">Directly override subscription plan parameters for {activeSubModalRes.name}.</p>
+            </div>
+
+            <div className="space-y-4">
+              <Select
+                label="Subscription Plan"
+                value={subPlanId}
+                onChange={(e) => setSubPlanId(e.target.value)}
+                options={plans.map(p => ({ value: p.id, label: `${p.name} ($${p.price}/mo)` }))}
+              />
+
+              <Select
+                label="Subscription Status"
+                value={subStatus}
+                onChange={(e) => setSubStatus(e.target.value)}
+                options={[
+                  { value: 'ACTIVE', label: 'Active (Paid / Subscribed)' },
+                  { value: 'TRIAL', label: 'Trial Mode' },
+                  { value: 'EXPIRED', label: 'Expired' },
+                  { value: 'CANCELLED', label: 'Suspended (Cancelled)' }
+                ]}
+              />
+
+              <Input
+                label="Subscription End Expiration Date"
+                type="date"
+                value={subEndDate}
+                onChange={(e) => setSubEndDate(e.target.value)}
+              />
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <Button
+                variant="ghost"
+                className="flex-1"
+                onClick={() => setActiveSubModalRes(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                className="flex-1"
+                onClick={handleSaveSubscription}
+                isLoading={actionLoadingId === activeSubModalRes.id}
+              >
+                Save Changes
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* MODAL: CREATE / EDIT CUSTOM THEME */}
+      {activeThemeModal && (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn overflow-y-auto">
+          <Card className="w-full max-w-lg p-6 bg-[#0D0D0F] border border-white/[0.08] shadow-2xl relative space-y-4 text-left my-8">
+            <button
+              onClick={() => setActiveThemeModal(null)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            
+            <div>
+              <h3 className="font-serif text-lg font-bold text-white">
+                {activeThemeModal === 'NEW' ? 'Publish Custom Layout Theme' : 'Edit Theme Layout Configurations'}
+              </h3>
+              <p className="text-xs text-gray-400 mt-1">Configure layout compatibility tier, font typography, and custom brand color schemes.</p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input
+                label="Theme Layout Name"
+                placeholder="e.g. Parisian Cafe"
+                value={themeName}
+                onChange={(e) => setThemeName(e.target.value)}
+              />
+
+              <Input
+                label="Theme Key Identifier"
+                placeholder="e.g. PARIS_CAFE"
+                value={themeKey}
+                onChange={(e) => setThemeKey(e.target.value)}
+                disabled={activeThemeModal !== 'NEW'}
+              />
+
+              <Input
+                label="Version Release"
+                placeholder="e.g. 1.0.0"
+                value={themeVersion}
+                onChange={(e) => setThemeVersion(e.target.value)}
+              />
+
+              <Select
+                label="Compatibility Tier"
+                value={themeTier}
+                onChange={(e) => setThemeTier(e.target.value)}
+                options={[
+                  { value: 'STARTER', label: 'Starter (Free / Entry)' },
+                  { value: 'PROFESSIONAL', label: 'Professional (Premium)' },
+                  { value: 'PREMIUM', label: 'Premium (Luxury)' }
+                ]}
+              />
+
+              <Select
+                label="Marketplace Status"
+                value={themeStatus}
+                onChange={(e) => setThemeStatus(e.target.value)}
+                options={[
+                  { value: 'PUBLISHED', label: 'Published / Active' },
+                  { value: 'DISABLED', label: 'Hidden / Draft' }
+                ]}
+              />
+
+              <div className="sm:col-span-2">
+                <Input
+                  label="Description"
+                  placeholder="Specify design details for restaurant owners..."
+                  value={themeDesc}
+                  onChange={(e) => setThemeDesc(e.target.value)}
+                />
+              </div>
+              
+              <div className="border-t border-white/5 sm:col-span-2 my-2" />
+
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase mb-2 select-none">Background Color</label>
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="color"
+                    value={themeBg}
+                    onChange={(e) => setThemeBg(e.target.value)}
+                    className="w-10 h-10 rounded-lg bg-transparent border-0 cursor-pointer p-0"
+                  />
+                  <span className="font-mono text-xs text-white uppercase">{themeBg}</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase mb-2 select-none">Text Color</label>
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="color"
+                    value={themeText}
+                    onChange={(e) => setThemeText(e.target.value)}
+                    className="w-10 h-10 rounded-lg bg-transparent border-0 cursor-pointer p-0"
+                  />
+                  <span className="font-mono text-xs text-white uppercase">{themeText}</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase mb-2 select-none">Accent / Highlight Color</label>
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="color"
+                    value={themeAccent}
+                    onChange={(e) => setThemeAccent(e.target.value)}
+                    className="w-10 h-10 rounded-lg bg-transparent border-0 cursor-pointer p-0"
+                  />
+                  <span className="font-mono text-xs text-white uppercase">{themeAccent}</span>
+                </div>
+              </div>
+
+              <div />
+
+              <Select
+                label="Heading Typography Font"
+                value={themeFontHeading}
+                onChange={(e) => setThemeFontHeading(e.target.value)}
+                options={[
+                  { value: 'Playfair Display', label: 'Playfair Display (Serif)' },
+                  { value: 'Lora', label: 'Lora (Soft Serif)' },
+                  { value: 'Poppins', label: 'Poppins (Geometric Sans)' },
+                  { value: 'Montserrat', label: 'Montserrat (Bold Clean)' },
+                  { value: 'Libre Baskerville', label: 'Libre Baskerville (Classic Serif)' }
+                ]}
+              />
+
+              <Select
+                label="Body Typography Font"
+                value={themeFontBody}
+                onChange={(e) => setThemeFontBody(e.target.value)}
+                options={[
+                  { value: 'Inter', label: 'Inter (Neutral Sans)' },
+                  { value: 'Roboto', label: 'Roboto (Modern Sans)' },
+                  { value: 'DM Sans', label: 'DM Sans (Geometric Neutral)' },
+                  { value: 'Raleway', label: 'Raleway (Elegant Sans)' },
+                  { value: 'Nunito', label: 'Nunito (Rounded Friendly)' }
+                ]}
+              />
+            </div>
+
+            {/* Theme Colors Mini Live Preview */}
+            <div className="mt-4 p-4 rounded-xl border border-white/[0.04] space-y-2" style={{ backgroundColor: themeBg }}>
+              <h4 className="font-bold text-xs" style={{ fontFamily: themeFontHeading, color: themeAccent }}>
+                Theme Live Preview Header
+              </h4>
+              <p className="text-[11px] leading-relaxed" style={{ fontFamily: themeFontBody, color: themeText }}>
+                This is how the custom colors and font choices will render inside the customer menu interfaces.
+              </p>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <Button
+                variant="ghost"
+                className="flex-1"
+                onClick={() => setActiveThemeModal(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                className="flex-1"
+                onClick={handleSaveTheme}
+              >
+                {activeThemeModal === 'NEW' ? 'Publish Theme' : 'Save Theme'}
+              </Button>
+            </div>
+          </Card>
         </div>
       )}
 
