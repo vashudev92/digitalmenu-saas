@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ChefHat, BookOpen } from 'lucide-react';
 import type { Metadata } from 'next';
-import { getTheme } from '@/lib/theme-config';
+import { getTheme, getContrastColor } from '@/lib/theme-config';
 import FontLoader from '@/components/font-loader';
 import ClientWelcomeAnimations from '@/components/client-welcome-animations';
 
@@ -243,7 +243,7 @@ export default async function RestaurantWelcomePage({ params, searchParams }: Pr
             background: resolvedRestaurant.primaryColor
               ? `linear-gradient(135deg, ${resolvedRestaurant.primaryColor} 0%, ${resolvedRestaurant.secondaryColor || resolvedRestaurant.primaryColor} 100%)`
               : undefined,
-            color: resolvedRestaurant.primaryColor ? '#000000' : undefined,
+            color: resolvedRestaurant.primaryColor ? getContrastColor(resolvedRestaurant.primaryColor).color : undefined,
             borderRadius: style.layoutMode === 'cafe' ? '9999px' : style.layoutMode === 'japanese' ? '0px' : undefined
           }}
         >

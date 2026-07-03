@@ -78,7 +78,7 @@ export const THEMES: Record<string, ThemeDefinition> = {
     layoutMode: 'luxury',
     bg: 'bg-[#050505]',
     text: 'text-white',
-    muted: 'text-[#8c8c8c]',
+    muted: 'text-[#A3A3A3]',
     headerBg: 'bg-[#050505]/95',
     cardBg: 'bg-[#0E0E0E] border-[#D4A437]/20 hover:border-[#D4A437]/50 shadow-[0_4px_30px_rgba(0,0,0,0.8)]',
     inputBg: 'bg-[#0E0E0E] border-gray-900 focus:border-[#D4A437]',
@@ -104,19 +104,19 @@ export const THEMES: Record<string, ThemeDefinition> = {
     layoutMode: 'cafe',
     bg: 'bg-[#FAF6F0]',
     text: 'text-[#3E2723]',
-    muted: 'text-[#8D6E63]',
+    muted: 'text-[#5D4037]',
     headerBg: 'bg-[#FAF6F0]/95',
     cardBg: 'bg-white border-[#EFEBE9] hover:border-[#BCAAA4] shadow-[0_8px_20px_rgba(141,110,99,0.06)]',
     inputBg: 'bg-[#F5EEEE] border-[#EFEBE9] focus:border-[#8D6E63]',
     catActive: 'bg-[#5D4037] text-white border-[#5D4037]',
-    catInactive: 'bg-white text-[#8D6E63] border-[#EFEBE9] hover:bg-[#F5EEEE]',
+    catInactive: 'bg-white text-[#5D4037] border-[#EFEBE9] hover:bg-[#F5EEEE]',
     accentText: 'text-[#5D4037]',
     accentHex: '#5D4037',
     divider: 'border-[#EFEBE9]',
     navBg: 'bg-white/95 border-[#EFEBE9]',
     primaryBtn: 'bg-[#5D4037] hover:bg-[#4E342E] text-white font-medium rounded-full',
     cardRadius: 'rounded-3xl',
-    priceBadge: 'bg-[#8D6E63]/10 text-[#5D4037] px-2 py-1 rounded-full text-[9px] font-bold',
+    priceBadge: 'bg-[#8D6E63]/15 text-[#5D4037] px-2 py-1 rounded-full text-[9px] font-bold',
     previewBg: '#FAF6F0',
     previewAccent: '#5D4037',
     previewText: '#3E2723',
@@ -130,12 +130,12 @@ export const THEMES: Record<string, ThemeDefinition> = {
     layoutMode: 'japanese',
     bg: 'bg-[#FCFAF2]',
     text: 'text-[#1F1F24]',
-    muted: 'text-[#8E8B82]',
+    muted: 'text-[#55534E]',
     headerBg: 'bg-[#FCFAF2]/95',
     cardBg: 'bg-[#FCFAF2] border-b border-[#E6E2D8] hover:bg-white/40 transition-colors',
     inputBg: 'bg-white border-[#E6E2D8] focus:border-[#1F1F24]',
     catActive: 'border-b-2 border-[#1F1F24] text-[#1F1F24] font-medium rounded-none',
-    catInactive: 'text-[#8E8B82] hover:text-[#1F1F24]',
+    catInactive: 'text-[#55534E] hover:text-[#1F1F24]',
     accentText: 'text-[#1F1F24] font-medium',
     accentHex: '#1F1F24',
     divider: 'border-[#E6E2D8]',
@@ -156,12 +156,12 @@ export const THEMES: Record<string, ThemeDefinition> = {
     layoutMode: 'bistro',
     bg: 'bg-[#FFFDF9]',
     text: 'text-[#2C1D11]',
-    muted: 'text-[#7A6A53]',
+    muted: 'text-[#5C4D3A]',
     headerBg: 'bg-[#FFFDF9]/95',
     cardBg: 'bg-white border-2 border-[#EAE1D2] hover:border-[#800020] transition-colors',
     inputBg: 'bg-white border-[#EAE1D2] focus:border-[#800020]',
     catActive: 'bg-[#800020] text-white border-[#800020] font-serif',
-    catInactive: 'bg-white text-[#7A6A53] border-[#EAE1D2] hover:bg-[#FFFDF9]',
+    catInactive: 'bg-white text-[#5C4D3A] border-[#EAE1D2] hover:bg-[#FFFDF9]',
     accentText: 'text-[#800020]',
     accentHex: '#800020',
     divider: 'border-[#EAE1D2]',
@@ -182,7 +182,7 @@ export const THEMES: Record<string, ThemeDefinition> = {
     layoutMode: 'indian',
     bg: 'bg-[#1C0505]',
     text: 'text-[#FFE4C4]',
-    muted: 'text-[#C39B72]',
+    muted: 'text-[#D4AF37]',
     headerBg: 'bg-[#1C0505]/95',
     cardBg: 'bg-[#2E0F0F] border-2 border-[#E8973F]/20 hover:border-[#E8973F]/60',
     inputBg: 'bg-[#2E0F0F] border-[#3F1C1C] focus:border-[#E8973F]',
@@ -208,12 +208,12 @@ export const THEMES: Record<string, ThemeDefinition> = {
     layoutMode: 'beach',
     bg: 'bg-[#F2ECE4]',
     text: 'text-[#004D40]',
-    muted: 'text-[#00796B]',
+    muted: 'text-[#005B4F]',
     headerBg: 'bg-[#F2ECE4]/95',
     cardBg: 'bg-white border-[#E0D5C8] hover:border-[#00897B] hover:shadow-lg transition-all',
     inputBg: 'bg-white border-[#E0D5C8] focus:border-[#00897B]',
     catActive: 'bg-[#00897B] text-white border-[#00897B]',
-    catInactive: 'bg-white text-[#00796B] border-[#E0D5C8] hover:bg-[#F2ECE4]',
+    catInactive: 'bg-white text-[#005B4F] border-[#E0D5C8] hover:bg-[#F2ECE4]',
     accentText: 'text-[#00897B]',
     accentHex: '#00897B',
     divider: 'border-[#E0D5C8]',
@@ -255,6 +255,30 @@ export function getTheme(key: string | null | undefined): ThemeDefinition {
   const mapped = LEGACY_THEME_MAP[key];
   if (mapped && THEMES[mapped]) return THEMES[mapped];
   return THEMES.LUXURY_DARK;
+}
+
+export function getContrastColor(hexColor: string | null | undefined): { color: string } {
+  if (!hexColor || typeof hexColor !== 'string') return { color: '#FFFFFF' };
+  
+  const cleanHex = hexColor.trim().replace('#', '');
+  if (cleanHex.length !== 6 && cleanHex.length !== 3) {
+    return { color: '#FFFFFF' };
+  }
+  
+  let r = 0, g = 0, b = 0;
+  if (cleanHex.length === 6) {
+    r = parseInt(cleanHex.substring(0, 2), 16);
+    g = parseInt(cleanHex.substring(2, 4), 16);
+    b = parseInt(cleanHex.substring(4, 6), 16);
+  } else {
+    r = parseInt(cleanHex.substring(0, 1) + cleanHex.substring(0, 1), 16);
+    g = parseInt(cleanHex.substring(1, 2) + cleanHex.substring(1, 2), 16);
+    b = parseInt(cleanHex.substring(2, 3) + cleanHex.substring(2, 3), 16);
+  }
+  
+  // Calculate brightness (YIQ formula)
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return { color: yiq >= 135 ? '#000000' : '#FFFFFF' };
 }
 
 // ---------------------------------------------------------------------------

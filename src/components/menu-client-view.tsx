@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getTheme } from '@/lib/theme-config';
+import { getTheme, getContrastColor } from '@/lib/theme-config';
 import FontLoader from '@/components/font-loader';
 import {
   Search,
@@ -189,10 +189,12 @@ export default function MenuClientView({
         color: primaryColor || style.accentHex,
       };
     }
+    const activeBg = primaryColor || style.accentHex;
+    const textContrast = getContrastColor(activeBg).color;
     return {
-      backgroundColor: primaryColor || style.accentHex,
-      borderColor: primaryColor || style.accentHex,
-      color: style.layoutMode === 'indian' ? '#000000' : '#ffffff',
+      backgroundColor: activeBg,
+      borderColor: activeBg,
+      color: textContrast,
     };
   };
 
@@ -723,7 +725,7 @@ export default function MenuClientView({
                   background: primaryColor
                     ? `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor || primaryColor} 100%)`
                     : undefined,
-                  color: primaryColor ? '#000000' : undefined,
+                  color: primaryColor ? getContrastColor(primaryColor).color : undefined,
                   borderRadius: style.layoutMode === 'cafe' ? '9999px' : style.layoutMode === 'japanese' ? '0px' : undefined
                 }}
               >
