@@ -112,6 +112,35 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'Restaurant not found' }, { status: 404 });
     }
 
+    // Verify theme permissions if specified
+    if (theme) {
+      const subscription = await db.subscription.findUnique({
+        where: { restaurantId: restaurant.id },
+        include: { plan: true },
+      });
+      if (subscription) {
+        const getThemeTier = (key: string): string => {
+          if (key === 'LUXURY_DARK' || key === 'MINIMAL_JAPANESE') return 'STARTER';
+          if (key === 'MODERN_CAFE' || key === 'ITALIAN_BISTRO') return 'PROFESSIONAL';
+          return 'PREMIUM';
+        };
+        const tier = getThemeTier(theme);
+        const planName = subscription.plan.name;
+        let isAllowed = true;
+        if (planName === 'Free') {
+          isAllowed = tier === 'STARTER';
+        } else if (planName === 'Premium') {
+          isAllowed = tier === 'STARTER' || tier === 'PROFESSIONAL';
+        }
+        if (!isAllowed) {
+          return NextResponse.json(
+            { error: `The theme "${theme}" is locked on your current plan. Please upgrade to a higher tier plan.` },
+            { status: 403 }
+          );
+        }
+      }
+    }
+
     // Process slug update if changed
     let finalSlug = restaurant.slug;
     let slugChanged = false;

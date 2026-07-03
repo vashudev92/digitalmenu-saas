@@ -1,7 +1,7 @@
 import { db } from '@/lib/db';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { ChefHat, ShieldCheck, Flame, Sparkles, BookOpen, Star, Clock, MapPin, Phone, Globe, ArrowRight } from 'lucide-react';
+import { ChefHat, BookOpen } from 'lucide-react';
 import type { Metadata } from 'next';
 import { getTheme } from '@/lib/theme-config';
 import FontLoader from '@/components/font-loader';
@@ -11,18 +11,39 @@ export const dynamic = 'force-dynamic';
 
 interface Props {
   params: Promise<{ slug: string }>;
+  searchParams?: Promise<{ profile?: string }>;
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const { slug } = await params;
+  const { profile: profileSlug } = (await searchParams) || {};
   const restaurant = await db.restaurant.findUnique({
     where: { slug },
   });
 
+  if (!restaurant) {
+    return { title: 'Digital Menu' };
+  }
+
+  let title = `${restaurant.name} | Welcome`;
+  if (profileSlug) {
+    const profile = await db.menuProfile.findUnique({
+      where: {
+        restaurantId_slug: {
+          restaurantId: restaurant.id,
+          slug: profileSlug,
+        },
+      },
+    });
+    if (profile) {
+      title = `${restaurant.name} — ${profile.name} | Welcome`;
+    }
+  }
+
   return {
-    title: restaurant ? `${restaurant.name} | Welcome` : 'Digital Menu',
-    description: restaurant?.description || 'Browse our premium menu listings.',
-    ...(restaurant?.favicon && {
+    title,
+    description: restaurant.description || 'Browse our premium menu listings.',
+    ...(restaurant.favicon && {
       icons: {
         icon: restaurant.favicon,
       },
@@ -30,8 +51,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function RestaurantWelcomePage({ params }: Props) {
+export default async function RestaurantWelcomePage({ params, searchParams }: Props) {
   const { slug } = await params;
+  const { profile: profileSlug } = (await searchParams) || {};
   
   const restaurant = await db.restaurant.findUnique({
     where: { slug },
@@ -46,6 +68,19 @@ export default async function RestaurantWelcomePage({ params }: Props) {
 
   if (!restaurant) {
     notFound();
+  }
+
+  // Find the menu profile if specified
+  let resolvedProfile = null;
+  if (profileSlug) {
+    resolvedProfile = await db.menuProfile.findUnique({
+      where: {
+        restaurantId_slug: {
+          restaurantId: restaurant.id,
+          slug: profileSlug,
+        },
+      },
+    });
   }
 
   // Check subscription suspension
@@ -66,17 +101,27 @@ export default async function RestaurantWelcomePage({ params }: Props) {
   }
 
   // Get active theme style
-  const style = getTheme(restaurant.theme);
+  const resolvedTheme = resolvedProfile?.theme || restaurant.theme;
+  const resolvedFontHeading = resolvedProfile?.fontHeading || restaurant.fontHeading;
+  const resolvedFontBody = resolvedProfile?.fontBody || restaurant.fontBody;
+  const resolvedLogo = resolvedProfile?.logoOverride || restaurant.logo;
+  const resolvedBanner = resolvedProfile?.bannerImage || restaurant.banner;
+  const resolvedPrimaryColor = resolvedProfile?.primaryColor || restaurant.primaryColor;
+  const resolvedSecondaryColor = resolvedProfile?.secondaryColor || restaurant.secondaryColor;
+  const resolvedAccentColor = resolvedProfile?.accentColor || restaurant.accentColor;
+  const resolvedOpeningHours = resolvedProfile?.openingHours || restaurant.openingHours;
+
+  const style = getTheme(resolvedTheme);
 
   // Font styles
-  const headingStyle = restaurant.fontHeading ? { fontFamily: `'${restaurant.fontHeading}', serif` } : {};
-  const bodyStyle = restaurant.fontBody ? { fontFamily: `'${restaurant.fontBody}', sans-serif` } : {};
+  const headingStyle = resolvedFontHeading ? { fontFamily: `'${resolvedFontHeading}', serif` } : {};
+  const bodyStyle = resolvedFontBody ? { fontFamily: `'${resolvedFontBody}', sans-serif` } : {};
 
   // Custom colors variables mapping
   const brandStyles = {
-    '--brand-primary': restaurant.primaryColor || style.accentHex,
-    '--brand-secondary': restaurant.secondaryColor || style.accentHex,
-    '--brand-accent': restaurant.accentColor || style.accentHex,
+    '--brand-primary': resolvedPrimaryColor || style.accentHex,
+    '--brand-secondary': resolvedSecondaryColor || style.accentHex,
+    '--brand-accent': resolvedAccentColor || style.accentHex,
     ...bodyStyle
   } as unknown as React.CSSProperties;
 
@@ -88,12 +133,26 @@ export default async function RestaurantWelcomePage({ params }: Props) {
     image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=600',
   };
 
+  const resolvedRestaurant = {
+    ...restaurant,
+    name: resolvedProfile?.name ? `${restaurant.name} (${resolvedProfile.name})` : restaurant.name,
+    logo: resolvedLogo,
+    banner: resolvedBanner,
+    theme: resolvedTheme,
+    primaryColor: resolvedPrimaryColor,
+    secondaryColor: resolvedSecondaryColor,
+    accentColor: resolvedAccentColor,
+    fontHeading: resolvedFontHeading,
+    fontBody: resolvedFontBody,
+    openingHours: resolvedOpeningHours,
+  };
+
   return (
     <div 
       className={`min-h-screen w-full overflow-x-hidden ${style.bg} ${style.text} flex flex-col justify-between max-w-[480px] mx-auto relative shadow-2xl pb-28`} 
       style={brandStyles}
     >
-      <FontLoader headingFont={restaurant.fontHeading} bodyFont={restaurant.fontBody} />
+      <FontLoader headingFont={resolvedRestaurant.fontHeading} bodyFont={resolvedRestaurant.fontBody} />
       
       <div>
         {/* Header section */}
@@ -103,9 +162,9 @@ export default async function RestaurantWelcomePage({ params }: Props) {
           }`}
         >
           <div className="flex flex-col items-center">
-            {restaurant.logo ? (
+            {resolvedRestaurant.logo ? (
               <img 
-                src={restaurant.logo} 
+                src={resolvedRestaurant.logo} 
                 alt="Logo" 
                 className={`w-8 h-8 object-cover mb-1.5 border border-white/5 ${
                   style.layoutMode === 'cafe' ? 'rounded-2xl' : 
@@ -113,7 +172,7 @@ export default async function RestaurantWelcomePage({ params }: Props) {
                 }`} 
               />
             ) : (
-              <ChefHat className="w-5 h-5 mb-1" style={{ color: restaurant.primaryColor || style.accentHex }} />
+              <ChefHat className="w-5 h-5 mb-1" style={{ color: resolvedRestaurant.primaryColor || style.accentHex }} />
             )}
             <span 
               className={`font-bold tracking-widest uppercase ${
@@ -122,7 +181,7 @@ export default async function RestaurantWelcomePage({ params }: Props) {
               }`} 
               style={headingStyle}
             >
-              {restaurant.name}
+              {resolvedRestaurant.name}
             </span>
           </div>
         </header>
@@ -139,8 +198,8 @@ export default async function RestaurantWelcomePage({ params }: Props) {
               'rounded-[1.5rem] h-[270px]' // beach layout
             }`}
           >
-            {restaurant.banner ? (
-              <img src={restaurant.banner} alt="Food Cover" className="w-full h-full object-cover" />
+            {resolvedRestaurant.banner ? (
+              <img src={resolvedRestaurant.banner} alt="Food Cover" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full bg-gradient-to-b from-zinc-900 to-black" />
             )}
@@ -154,13 +213,13 @@ export default async function RestaurantWelcomePage({ params }: Props) {
                 }`} 
                 style={headingStyle}
               >
-                {restaurant.bannerTitle1 || 'Good Food'}<br />
-                <span style={{ color: restaurant.primaryColor || style.accentHex }}>
-                  {restaurant.bannerTitle2 || 'Great Mood'}
+                {resolvedRestaurant.bannerTitle1 || 'Good Food'}<br />
+                <span style={{ color: resolvedRestaurant.primaryColor || style.accentHex }}>
+                  {resolvedRestaurant.bannerTitle2 || 'Great Mood'}
                 </span>
               </h2>
               <p className="text-gray-300 text-[10px] mt-2 font-medium max-w-xs opacity-80">
-                {restaurant.bannerSubtitle || "Discover our chef's special selection just for you."}
+                {resolvedRestaurant.bannerSubtitle || "Discover our chef's special selection just for you."}
               </p>
             </div>
           </div>
@@ -168,7 +227,7 @@ export default async function RestaurantWelcomePage({ params }: Props) {
 
         {/* Client Welcome animations / layout tags */}
         <ClientWelcomeAnimations 
-          restaurant={restaurant} 
+          restaurant={resolvedRestaurant} 
           style={style} 
           headingStyle={headingStyle}
           todaySpecial={todaySpecial}
@@ -178,13 +237,13 @@ export default async function RestaurantWelcomePage({ params }: Props) {
       {/* Floating Bottom Menu Bar */}
       <div className="fixed bottom-5 left-0 right-0 mx-auto w-[90%] max-w-[400px] z-40 px-3 no-print">
         <Link
-          href={`/r/${slug}/menu`}
+          href={profileSlug ? `/r/${slug}/${profileSlug}` : `/r/${slug}/menu`}
           className={`w-full py-3.5 flex items-center justify-center gap-2.5 shadow-2xl transition-all active:scale-[0.98] ${style.primaryBtn}`}
           style={{
-            background: restaurant.primaryColor
-              ? `linear-gradient(135deg, ${restaurant.primaryColor} 0%, ${restaurant.secondaryColor || restaurant.primaryColor} 100%)`
+            background: resolvedRestaurant.primaryColor
+              ? `linear-gradient(135deg, ${resolvedRestaurant.primaryColor} 0%, ${resolvedRestaurant.secondaryColor || resolvedRestaurant.primaryColor} 100%)`
               : undefined,
-            color: restaurant.primaryColor ? '#000000' : undefined,
+            color: resolvedRestaurant.primaryColor ? '#000000' : undefined,
             borderRadius: style.layoutMode === 'cafe' ? '9999px' : style.layoutMode === 'japanese' ? '0px' : undefined
           }}
         >

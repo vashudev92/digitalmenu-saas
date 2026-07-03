@@ -121,6 +121,7 @@ export default async function ProfileMenuPage({ params }: Props) {
     <MenuClientView
       restaurantName={restaurant.name}
       restaurantSlug={restaurant.slug}
+      profileSlug={profileSlug}
       logoUrl={resolvedLogo || ''}
       theme={resolvedTheme}
       currencySymbol={restaurant.currencySymbol}

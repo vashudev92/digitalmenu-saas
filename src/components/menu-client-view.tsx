@@ -49,6 +49,7 @@ interface MenuItemOption {
 interface Props {
   restaurantName: string;
   restaurantSlug: string;
+  profileSlug?: string;
   logoUrl: string;
   theme: string;
   currencySymbol?: string;
@@ -108,6 +109,7 @@ function MenuSkeleton() {
 export default function MenuClientView({
   restaurantName,
   restaurantSlug,
+  profileSlug,
   logoUrl,
   theme,
   currencySymbol = '₹',
@@ -215,7 +217,7 @@ export default function MenuClientView({
           {/* Top Header */}
           <div className="px-4 pt-4 pb-3 flex items-center justify-between">
             <Link
-              href={`/r/${restaurantSlug}`}
+              href={profileSlug ? `/r/${restaurantSlug}?profile=${profileSlug}` : `/r/${restaurantSlug}`}
               className="p-1.5 rounded-xl bg-white/[0.02] border border-white/[0.04] text-gray-400 hover:text-white transition-all"
             >
               <ChevronLeft className="w-5 h-5" />
@@ -609,7 +611,7 @@ export default function MenuClientView({
       {/* Sticky Bottom Navigation Bar */}
       <nav className={`fixed bottom-0 left-0 right-0 mx-auto w-full max-w-[480px] z-40 backdrop-blur-md border-t px-6 py-4.5 flex items-center justify-between ${style.navBg}`}>
         <Link
-          href={`/r/${restaurantSlug}`}
+          href={profileSlug ? `/r/${restaurantSlug}?profile=${profileSlug}` : `/r/${restaurantSlug}`}
           className="flex flex-col items-center gap-1 text-gray-500 hover:text-white transition-colors"
         >
           <Home className="w-4 h-4" />
@@ -617,7 +619,7 @@ export default function MenuClientView({
         </Link>
 
         <Link
-          href={`/r/${restaurantSlug}/menu`}
+          href={profileSlug ? `/r/${restaurantSlug}/${profileSlug}` : `/r/${restaurantSlug}/menu`}
           className="flex flex-col items-center gap-1 transition-colors"
           style={{ color: primaryColor || style.accentHex }}
         >

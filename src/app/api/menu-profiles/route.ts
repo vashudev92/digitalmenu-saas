@@ -132,6 +132,48 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Name and slug are required' }, { status: 400 });
     }
 
+    // Verify plan limits
+    const subscription = await db.subscription.findUnique({
+      where: { restaurantId: restaurant.id },
+      include: { plan: true },
+    });
+    
+    if (subscription) {
+      const currentCount = await db.menuProfile.count({
+        where: { restaurantId: restaurant.id },
+      });
+      const allowed = subscription.plan.diningAreasAllowed;
+      if (currentCount >= allowed) {
+        return NextResponse.json(
+          { error: `Your ${subscription.plan.name} plan only allows up to ${allowed} menu profile(s). Please upgrade your subscription to create more.` },
+          { status: 403 }
+        );
+      }
+      
+      // Verify theme selection permissions if specified
+      if (theme) {
+        const getThemeTier = (key: string): string => {
+          if (key === 'LUXURY_DARK' || key === 'MINIMAL_JAPANESE') return 'STARTER';
+          if (key === 'MODERN_CAFE' || key === 'ITALIAN_BISTRO') return 'PROFESSIONAL';
+          return 'PREMIUM';
+        };
+        const tier = getThemeTier(theme);
+        const planName = subscription.plan.name;
+        let isAllowed = true;
+        if (planName === 'Free') {
+          isAllowed = tier === 'STARTER';
+        } else if (planName === 'Premium') {
+          isAllowed = tier === 'STARTER' || tier === 'PROFESSIONAL';
+        }
+        if (!isAllowed) {
+          return NextResponse.json(
+            { error: `The theme "${theme}" is locked on your current plan. Please upgrade to a higher tier plan.` },
+            { status: 403 }
+          );
+        }
+      }
+    }
+
     // Validate slug format
     const slugRegex = /^[a-z0-9-]+$/;
     if (!slugRegex.test(slug)) {

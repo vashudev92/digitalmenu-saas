@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
@@ -9,6 +10,18 @@ export default function DashboardHeader({ onMenuClick }: { onMenuClick?: () => v
   const { data: session } = useSession();
   const pathname = usePathname();
   const slug = session?.user?.restaurantSlug;
+
+  const [isImpersonating, setIsImpersonating] = useState(false);
+
+  useEffect(() => {
+    setIsImpersonating(document.cookie.includes('impersonate_restaurant_id='));
+  }, []);
+
+  const handleExitImpersonate = () => {
+    document.cookie = "impersonate_restaurant_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+    document.cookie = "impersonate_restaurant_slug=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+    window.location.href = '/admin';
+  };
 
   // Resolve dynamic title
   const getPageTitle = () => {
@@ -52,6 +65,14 @@ export default function DashboardHeader({ onMenuClick }: { onMenuClick?: () => v
       </div>
 
       <div className="flex items-center gap-2 md:gap-5 shrink-0">
+        {isImpersonating && (
+          <button
+            onClick={handleExitImpersonate}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 text-[10px] md:text-[11px] font-semibold transition-all cursor-pointer shrink-0"
+          >
+            <span>Exit Simulation</span>
+          </button>
+        )}
         {slug ? (
           <Link
             href={`/r/${slug}`}

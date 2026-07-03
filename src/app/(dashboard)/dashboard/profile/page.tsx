@@ -223,8 +223,8 @@ export default function ProfilePage() {
 
   const isThemeLocked = (themeKey: string) => {
     const tier = getThemeTier(themeKey);
-    if (planName === 'Premium') return false;
-    if (planName === 'Professional') {
+    if (planName === 'Luxury') return false;
+    if (planName === 'Premium') {
       return tier === 'PREMIUM';
     }
     // Free plan locks PROFESSIONAL & PREMIUM

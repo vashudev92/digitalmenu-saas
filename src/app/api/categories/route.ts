@@ -82,6 +82,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Category Name is required' }, { status: 400 });
     }
 
+    // Verify plan limits
+    const subscription = await db.subscription.findUnique({
+      where: { restaurantId: restaurant.id },
+      include: { plan: true },
+    });
+    
+    if (subscription && subscription.plan.name === 'Free') {
+      const currentCount = await db.category.count({
+        where: { restaurantId: restaurant.id },
+      });
+      if (currentCount >= 2) {
+        return NextResponse.json(
+          { error: `Your Free plan only allows up to 2 categories. Please upgrade your subscription to create more.` },
+          { status: 403 }
+        );
+      }
+    }
+
     // Check if category name already exists for this restaurant
     const existing = await db.category.findUnique({
       where: {

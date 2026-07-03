@@ -88,6 +88,32 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Name, Price and Category are required' }, { status: 400 });
     }
 
+    // Verify plan limits
+    const subscription = await db.subscription.findUnique({
+      where: { restaurantId: restaurant.id },
+      include: { plan: true },
+    });
+    
+    if (subscription) {
+      const currentCount = await db.menuItem.count({
+        where: { restaurantId: restaurant.id },
+      });
+      
+      let allowed = Infinity;
+      if (subscription.plan.name === 'Free') {
+        allowed = 15;
+      } else if (subscription.plan.name === 'Premium') {
+        allowed = 100;
+      }
+      
+      if (currentCount >= allowed) {
+        return NextResponse.json(
+          { error: `Your ${subscription.plan.name} plan only allows up to ${allowed} menu items. Please upgrade your subscription to create more.` },
+          { status: 403 }
+        );
+      }
+    }
+
     // Verify category belongs to this restaurant
     const category = await db.category.findFirst({
       where: {
