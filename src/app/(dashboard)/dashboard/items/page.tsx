@@ -388,9 +388,9 @@ export default function MenuItemsPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {catGroup.items.map((item) => (
-                    <Card key={item.id} className="p-4 flex gap-4 items-center justify-between border-white/[0.04] hover:border-[#D4A853]/25 transition-all bg-zinc-900/10 relative overflow-hidden group">
+                    <Card key={item.id} className="p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between border-white/[0.04] hover:border-[#D4A853]/25 transition-all bg-zinc-900/10 relative overflow-hidden group">
                       {/* Left: Image & Info */}
-                      <div className="flex gap-4 items-center overflow-hidden flex-1">
+                      <div className="flex gap-4 items-center overflow-hidden flex-1 w-full text-left">
                         <div className="w-16 h-16 rounded-xl bg-zinc-950 border border-white/5 overflow-hidden shrink-0 flex items-center justify-center">
                           {item.image ? (
                             <img src={item.image} alt={item.name} className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300" />
@@ -398,7 +398,7 @@ export default function MenuItemsPage() {
                             <UtensilsCrossed className="w-5 h-5 text-gray-700" />
                           )}
                         </div>
-                        <div className="overflow-hidden space-y-0.5 text-left">
+                        <div className="overflow-hidden space-y-0.5 text-left flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <h4 className="font-serif font-bold text-sm text-white truncate">{item.name}</h4>
                             <span
@@ -429,11 +429,11 @@ export default function MenuItemsPage() {
                       </div>
 
                       {/* Right: Actions */}
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto w-full sm:w-auto justify-end border-t border-white/[0.03] sm:border-t-0 pt-2.5 sm:pt-0">
                         {/* Status Toggle */}
                         <button
                           onClick={() => handleToggleAvailability(item)}
-                          className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+                          className={`p-2 rounded-lg border transition-colors cursor-pointer ${
                             item.isAvailable
                               ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/15'
                               : 'border-white/5 bg-zinc-900/40 text-gray-500 hover:text-gray-400'
@@ -445,13 +445,13 @@ export default function MenuItemsPage() {
 
                         <button
                           onClick={() => openEditModal(item)}
-                          className="p-1.5 rounded-lg bg-zinc-950 border border-white/5 text-gray-500 hover:text-[#D4A853] transition-all cursor-pointer"
+                          className="p-2 rounded-lg bg-zinc-950 border border-white/5 text-gray-500 hover:text-[#D4A853] transition-all cursor-pointer"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => handleDelete(item.id)}
-                          className="p-1.5 rounded-lg bg-zinc-950 border border-white/5 text-gray-500 hover:text-red-400 transition-all cursor-pointer"
+                          className="p-2 rounded-lg bg-zinc-950 border border-white/5 text-gray-500 hover:text-red-400 transition-all cursor-pointer"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -484,7 +484,7 @@ export default function MenuItemsPage() {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 28, stiffness: 260 }}
-              className="relative w-full max-w-lg bg-[#0D0D0F] border-l border-white/[0.06] shadow-2xl h-full flex flex-col justify-between p-6 overflow-y-auto"
+              className="relative w-full sm:max-w-lg bg-[#0D0D0F] border-l border-white/[0.06] shadow-2xl h-full flex flex-col justify-between p-6 overflow-y-auto"
             >
               <div className="space-y-6">
                 <div className="flex items-center justify-between border-b border-white/[0.04] pb-4">

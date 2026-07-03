@@ -78,7 +78,7 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6 max-w-5xl mx-auto text-left">
       {/* Premium Stripe-like Glass Welcome Header */}
-      <Card className="p-6 bg-gradient-to-br from-zinc-900 to-black border-white/[0.04] flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden">
+      <Card className="p-4 sm:p-6 bg-gradient-to-br from-zinc-900 to-black border-white/[0.04] flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden">
         {/* Decorative subtle gold light leak */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#D4A853]/5 rounded-full blur-[80px] pointer-events-none" />
         
@@ -105,13 +105,13 @@ export default async function DashboardPage() {
       {/* High Density KPI Statistics Dashboard Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {/* KPI: Categories */}
-        <Card className="p-4 flex flex-col justify-between h-28 border-white/[0.04] bg-zinc-900/40 relative group overflow-hidden">
+        <Card className="p-3.5 sm:p-4 flex flex-col justify-between h-28 border-white/[0.04] bg-zinc-900/40 relative group overflow-hidden">
           <div className="flex justify-between items-start">
             <div>
               <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest block">Categories</span>
               <h3 className="text-2xl font-serif font-black text-white mt-1.5">{totalCategories}</h3>
             </div>
-            <div className="p-2 rounded-lg bg-white/[0.02] border border-white/[0.05] text-gray-500 group-hover:text-[#D4A853] transition-colors">
+            <div className="p-1.5 rounded-lg bg-white/[0.02] border border-white/[0.05] text-gray-500 group-hover:text-[#D4A853] transition-colors">
               <Layers className="w-4 h-4" />
             </div>
           </div>
@@ -121,13 +121,13 @@ export default async function DashboardPage() {
         </Card>
 
         {/* KPI: Dishes */}
-        <Card className="p-4 flex flex-col justify-between h-28 border-white/[0.04] bg-zinc-900/40 relative group overflow-hidden">
+        <Card className="p-3.5 sm:p-4 flex flex-col justify-between h-28 border-white/[0.04] bg-zinc-900/40 relative group overflow-hidden">
           <div className="flex justify-between items-start">
             <div>
               <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest block">Dishes Directory</span>
               <h3 className="text-2xl font-serif font-black text-white mt-1.5">{totalMenuItems}</h3>
             </div>
-            <div className="p-2 rounded-lg bg-white/[0.02] border border-white/[0.05] text-gray-500 group-hover:text-[#D4A853] transition-colors">
+            <div className="p-1.5 rounded-lg bg-white/[0.02] border border-white/[0.05] text-gray-500 group-hover:text-[#D4A853] transition-colors">
               <UtensilsCrossed className="w-4 h-4" />
             </div>
           </div>
@@ -137,13 +137,13 @@ export default async function DashboardPage() {
         </Card>
 
         {/* KPI: Menu Profiles */}
-        <Card className="p-4 flex flex-col justify-between h-28 border-white/[0.04] bg-zinc-900/40 relative group overflow-hidden">
+        <Card className="p-3.5 sm:p-4 flex flex-col justify-between h-28 border-white/[0.04] bg-zinc-900/40 relative group overflow-hidden">
           <div className="flex justify-between items-start">
             <div>
               <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest block">Active Profiles</span>
               <h3 className="text-2xl font-serif font-black text-white mt-1.5">{totalProfiles}</h3>
             </div>
-            <div className="p-2 rounded-lg bg-white/[0.02] border border-white/[0.05] text-gray-500 group-hover:text-[#D4A853] transition-colors">
+            <div className="p-1.5 rounded-lg bg-white/[0.02] border border-white/[0.05] text-gray-500 group-hover:text-[#D4A853] transition-colors">
               <BookCopy className="w-4 h-4" />
             </div>
           </div>
@@ -153,13 +153,13 @@ export default async function DashboardPage() {
         </Card>
 
         {/* KPI: QR Status */}
-        <Card className="p-4 flex flex-col justify-between h-28 border-white/[0.04] bg-zinc-900/40 relative group overflow-hidden">
+        <Card className="p-3.5 sm:p-4 flex flex-col justify-between h-28 border-white/[0.04] bg-zinc-900/40 relative group overflow-hidden">
           <div className="flex justify-between items-start">
             <div>
               <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest block">QR Routing Code</span>
               <h3 className={`text-2xl font-serif font-black mt-1.5 ${qrStatus === 'Active' ? 'text-emerald-400' : 'text-amber-400'}`}>{qrStatus}</h3>
             </div>
-            <div className="p-2 rounded-lg bg-white/[0.02] border border-white/[0.05] text-gray-500 group-hover:text-[#D4A853] transition-colors">
+            <div className="p-1.5 rounded-lg bg-white/[0.02] border border-white/[0.05] text-gray-500 group-hover:text-[#D4A853] transition-colors">
               <QrCode className="w-4 h-4" />
             </div>
           </div>
@@ -171,7 +171,7 @@ export default async function DashboardPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Left column: Quick Actions Panel */}
-        <Card className="p-5 md:col-span-1 border-white/[0.04] bg-zinc-900/20 space-y-4">
+        <Card className="p-4 sm:p-5 md:col-span-1 border-white/[0.04] bg-zinc-900/20 space-y-4">
           <div>
             <h3 className="font-serif text-sm font-bold text-white tracking-wider uppercase">Quick Actions</h3>
             <p className="text-[10px] text-gray-500 mt-0.5">Rapid adjustments configuration settings.</p>
@@ -220,7 +220,7 @@ export default async function DashboardPage() {
         </Card>
 
         {/* Right column: High density lists summary */}
-        <Card className="p-5 md:col-span-2 border-white/[0.04] bg-zinc-900/20 space-y-4">
+        <Card className="p-4 sm:p-5 md:col-span-2 border-white/[0.04] bg-zinc-900/20 space-y-4">
           <div className="flex justify-between items-center">
             <div>
               <h3 className="font-serif text-sm font-bold text-white tracking-wider uppercase">Recently Added Dishes</h3>

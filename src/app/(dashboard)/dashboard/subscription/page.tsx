@@ -320,7 +320,7 @@ export default function SubscriptionPage() {
             {/* Step 1: Billing Cycle */}
             <div className="space-y-3">
               <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Select Cycle</label>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <button
                   type="button"
                   onClick={() => setBillingCycle('MONTHLY')}

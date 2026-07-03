@@ -331,7 +331,7 @@ export default function CategoriesPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse hidden md:table">
               <thead>
                 <tr className="border-b border-white/[0.04] bg-white/[0.01] text-[10px] text-gray-500 uppercase tracking-widest font-bold">
                   <th className="px-6 py-3">Category info</th>
@@ -350,7 +350,7 @@ export default function CategoriesPage() {
                         </div>
                         <div>
                           <span className="font-bold text-white block">{cat.name}</span>
-                          <span className="text-[9px] text-gray-500 font-mono block mt-0.5">Position key: {cat.sortOrder}</span>
+                          <span className="text-[9px] text-gray-500 mt-0.5">Order: #{cat.sortOrder}</span>
                         </div>
                       </div>
                     </td>
@@ -358,63 +358,129 @@ export default function CategoriesPage() {
                     <td className="px-6 py-4 text-center">
                       <button
                         onClick={() => handleToggleStatus(cat)}
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-bold uppercase transition-all cursor-pointer ${
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border transition-colors cursor-pointer select-none ${
                           cat.status
-                            ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/15'
-                            : 'border-white/5 bg-zinc-900/40 text-gray-500 hover:text-gray-400'
+                            ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 hover:bg-emerald-500/15'
+                            : 'bg-zinc-800/40 border-white/5 text-gray-400 hover:text-white hover:bg-zinc-800/60'
                         }`}
                       >
-                        {cat.status ? (
-                          <>
-                            <Eye className="w-3 h-3" /> Active
-                          </>
-                        ) : (
-                          <>
-                            <EyeOff className="w-3 h-3" /> Inactive
-                          </>
-                        )}
+                        {cat.status ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                        {cat.status ? 'Active' : 'Disabled'}
                       </button>
                     </td>
 
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 text-center">
                       <div className="flex items-center justify-center gap-1">
                         <button
-                          disabled={index === 0}
                           onClick={() => handleMove(index, 'up')}
-                          className="p-1.5 rounded-lg bg-zinc-950 border border-white/5 text-gray-500 hover:text-white disabled:opacity-20 cursor-pointer transition-colors"
+                          disabled={index === 0}
+                          className="p-1 rounded bg-white/[0.02] border border-white/5 text-gray-400 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/[0.04] cursor-pointer"
                         >
-                          <ChevronUp className="w-3.5 h-3.5" />
+                          <ChevronUp className="w-3 h-3" />
                         </button>
                         <button
-                          disabled={index === categories.length - 1}
                           onClick={() => handleMove(index, 'down')}
-                          className="p-1.5 rounded-lg bg-zinc-950 border border-white/5 text-gray-500 hover:text-white disabled:opacity-20 cursor-pointer transition-colors"
+                          disabled={index === categories.length - 1}
+                          className="p-1 rounded bg-white/[0.02] border border-white/5 text-gray-400 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/[0.04] cursor-pointer"
                         >
-                          <ChevronDown className="w-3.5 h-3.5" />
+                          <ChevronDown className="w-3 h-3" />
                         </button>
                       </div>
                     </td>
 
-                    <td className="px-6 py-4 text-right space-x-1.5 whitespace-nowrap">
-                      <button
+                    <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap">
+                      <Button
+                        variant="secondary"
+                        size="sm"
                         onClick={() => openEditModal(cat)}
-                        className="p-2 rounded-lg bg-zinc-950 border border-white/5 text-gray-400 hover:text-[#D4A853] transition-colors cursor-pointer"
-                        title="Edit properties"
+                        className="h-8 gap-1 cursor-pointer"
                       >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
-                      <button
+                        <Edit2 className="w-3 h-3 text-[#D4A853]" /> Edit
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
                         onClick={() => handleDelete(cat.id)}
-                        className="p-2 rounded-lg bg-zinc-950 border border-white/5 text-gray-400 hover:text-red-400 transition-colors cursor-pointer"
-                        title="Remove category"
+                        className="h-8 gap-1 cursor-pointer"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                        <Trash2 className="w-3 h-3" /> Delete
+                      </Button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+
+            {/* Mobile-friendly list of cards */}
+            <div className="md:hidden divide-y divide-white/[0.04] p-1">
+              {categories.map((cat, index) => (
+                <div key={cat.id} className="p-4 flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-zinc-950 border border-white/5 text-[#D4A853] shrink-0">
+                        {iconMap[cat.icon] || <Utensils className="w-4 h-4" />}
+                      </div>
+                      <div className="text-left">
+                        <span className="text-sm font-bold text-white block truncate max-w-[150px]">{cat.name}</span>
+                        <span className="text-[10px] text-gray-500 font-mono">Order: #{cat.sortOrder}</span>
+                      </div>
+                    </div>
+                    <div className={`px-2 py-0.5 rounded text-[10px] font-bold ${cat.status ? 'bg-emerald-500/10 text-emerald-400' : 'bg-zinc-800 text-gray-400'}`}>
+                      {cat.status ? 'Active' : 'Disabled'}
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between border-t border-white/[0.03] pt-2.5">
+                    {/* Reorder Buttons */}
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => handleMove(index, 'up')}
+                        disabled={index === 0}
+                        className="p-2 rounded-xl bg-white/[0.02] hover:bg-white/[0.04] border border-white/5 text-gray-400 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                      >
+                        <ChevronUp className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleMove(index, 'down')}
+                        disabled={index === categories.length - 1}
+                        className="p-2 rounded-xl bg-white/[0.02] hover:bg-white/[0.04] border border-white/5 text-gray-400 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                      >
+                        <ChevronDown className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    
+                    {/* Action triggers */}
+                    <div className="flex items-center gap-1.5">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleToggleStatus(cat)}
+                        className="h-8 px-2 text-[10px]"
+                      >
+                        {cat.status ? <EyeOff className="w-3 h-3 mr-1" /> : <Eye className="w-3 h-3 mr-1" />}
+                        {cat.status ? 'Hide' : 'Show'}
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => openEditModal(cat)}
+                        className="h-8 px-2 text-[10px]"
+                      >
+                        <Edit2 className="w-3 h-3 text-[#D4A853] mr-1" /> Edit
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => handleDelete(cat.id)}
+                        className="h-8 px-2 text-[10px]"
+                      >
+                        <Trash2 className="w-3 h-3 mr-1" /> Delete
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </Card>

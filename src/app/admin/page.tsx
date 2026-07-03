@@ -34,7 +34,8 @@ import {
   ChevronRight,
   Check,
   UserCheck,
-  X
+  X,
+  Menu
 } from 'lucide-react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
@@ -140,6 +141,7 @@ export default function AdminPage() {
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [adminSidebarOpen, setAdminSidebarOpen] = useState(false);
 
   // Subscription Edit Modal States
   const [activeSubModalRes, setActiveSubModalRes] = useState<any | null>(null);
@@ -480,16 +482,23 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-[#050505] text-white flex flex-col">
       {/* Top Header Command Bar */}
-      <header className="border-b border-white/[0.04] bg-[#0E0E0E]/80 backdrop-blur-md px-6 py-4 flex items-center justify-between sticky top-0 z-40">
-        <div className="flex items-center gap-3">
-          <Shield className="w-6 h-6 text-[#D4A437]" />
-          <div>
+      <header className="border-b border-white/[0.04] bg-[#0E0E0E]/80 backdrop-blur-md px-4 md:px-6 py-4 flex items-center justify-between sticky top-0 z-40">
+        <div className="flex items-center gap-3 min-w-0">
+          {/* Hamburger toggle */}
+          <button
+            onClick={() => setAdminSidebarOpen(true)}
+            className="p-2 -ml-2 rounded-lg hover:bg-white/[0.03] text-gray-400 hover:text-white transition-all cursor-pointer lg:hidden block focus:outline-none shrink-0"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+          <Shield className="w-6 h-6 text-[#D4A437] shrink-0" />
+          <div className="min-w-0">
             <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest block">Operations Center</span>
-            <h1 className="font-serif text-lg font-bold text-white leading-none">DigitalMenu Control Panel</h1>
+            <h1 className="font-serif text-sm sm:text-base font-bold text-white leading-none truncate">DigitalMenu Control Panel</h1>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3 shrink-0">
           {/* Notification bell badge */}
           {notifications.length > 0 && (
             <div className="relative">
@@ -507,25 +516,48 @@ export default function AdminPage() {
 
           <Link
             href="/dashboard"
-            className="text-xs text-gray-400 hover:text-white border border-white/[0.04] bg-white/[0.01] px-4 py-2 rounded-xl transition-all"
+            className="text-[10px] sm:text-xs text-gray-400 hover:text-white border border-white/[0.04] bg-white/[0.01] px-3 sm:px-4 py-2 rounded-xl transition-all"
           >
             Owner View
           </Link>
           <button
             onClick={() => signOut({ callbackUrl: '/' })}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 text-red-400 text-xs font-bold transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 text-red-400 text-[10px] sm:text-xs font-bold transition-all cursor-pointer"
           >
-            <LogOut className="w-3.5 h-3.5" /> Sign Out
+            <LogOut className="w-3.5 h-3.5" /> <span className="hidden xs:inline">Sign Out</span>
           </button>
         </div>
       </header>
 
       {/* Main Body Workspace split */}
-      <div className="flex flex-1 flex-col lg:flex-row">
+      <div className="flex flex-1 flex-col lg:flex-row relative">
+        {/* Mobile Drawer Backdrop */}
+        {adminSidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300"
+            onClick={() => setAdminSidebarOpen(false)}
+          />
+        )}
+
         {/* Navigation Sidebar */}
-        <aside className="w-full lg:w-64 border-r border-white/[0.04] bg-[#0A0A0A] p-4 flex flex-col gap-1.5 shrink-0">
+        <aside
+          className={`fixed inset-y-0 left-0 w-64 bg-[#0A0A0A] border-r border-white/[0.04] p-4 flex flex-col gap-1.5 shrink-0 z-50 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:z-20 lg:h-auto ${
+            adminSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
+        >
+          {/* Header section on mobile to close the drawer */}
+          <div className="flex lg:hidden items-center justify-between pb-4 border-b border-white/[0.04] mb-3">
+            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Navigation</span>
+            <button
+              onClick={() => setAdminSidebarOpen(false)}
+              className="p-1.5 rounded-lg text-gray-500 hover:text-white"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
           <button
-            onClick={() => setActiveTab('overview')}
+            onClick={() => { setActiveTab('overview'); setAdminSidebarOpen(false); }}
             className={`w-full text-left px-4.5 py-3 rounded-xl text-xs font-bold transition-all flex items-center gap-3 ${
               activeTab === 'overview'
                 ? 'bg-[#D4A437]/10 text-[#D4A437] border-l-2 border-[#D4A437]'
@@ -537,7 +569,7 @@ export default function AdminPage() {
           </button>
 
           <button
-            onClick={() => setActiveTab('crm')}
+            onClick={() => { setActiveTab('crm'); setAdminSidebarOpen(false); }}
             className={`w-full text-left px-4.5 py-3 rounded-xl text-xs font-bold transition-all flex items-center gap-3 ${
               activeTab === 'crm'
                 ? 'bg-[#D4A437]/10 text-[#D4A437] border-l-2 border-[#D4A437]'
@@ -549,7 +581,7 @@ export default function AdminPage() {
           </button>
 
           <button
-            onClick={() => setActiveTab('approvals')}
+            onClick={() => { setActiveTab('approvals'); setAdminSidebarOpen(false); }}
             className={`w-full text-left px-4.5 py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-between gap-3 ${
               activeTab === 'approvals'
                 ? 'bg-[#D4A437]/10 text-[#D4A437] border-l-2 border-[#D4A437]'
@@ -568,7 +600,7 @@ export default function AdminPage() {
           </button>
 
           <button
-            onClick={() => setActiveTab('payments')}
+            onClick={() => { setActiveTab('payments'); setAdminSidebarOpen(false); }}
             className={`w-full text-left px-4.5 py-3 rounded-xl text-xs font-bold transition-all flex items-center gap-3 ${
               activeTab === 'payments'
                 ? 'bg-[#D4A437]/10 text-[#D4A437] border-l-2 border-[#D4A437]'
@@ -580,7 +612,7 @@ export default function AdminPage() {
           </button>
 
           <button
-            onClick={() => setActiveTab('themes')}
+            onClick={() => { setActiveTab('themes'); setAdminSidebarOpen(false); }}
             className={`w-full text-left px-4.5 py-3 rounded-xl text-xs font-bold transition-all flex items-center gap-3 ${
               activeTab === 'themes'
                 ? 'bg-[#D4A437]/10 text-[#D4A437] border-l-2 border-[#D4A437]'
@@ -592,7 +624,7 @@ export default function AdminPage() {
           </button>
 
           <button
-            onClick={() => setActiveTab('plans')}
+            onClick={() => { setActiveTab('plans'); setAdminSidebarOpen(false); }}
             className={`w-full text-left px-4.5 py-3 rounded-xl text-xs font-bold transition-all flex items-center gap-3 ${
               activeTab === 'plans'
                 ? 'bg-[#D4A437]/10 text-[#D4A437] border-l-2 border-[#D4A437]'
@@ -604,7 +636,7 @@ export default function AdminPage() {
           </button>
 
           <button
-            onClick={() => setActiveTab('settings')}
+            onClick={() => { setActiveTab('settings'); setAdminSidebarOpen(false); }}
             className={`w-full text-left px-4.5 py-3 rounded-xl text-xs font-bold transition-all flex items-center gap-3 ${
               activeTab === 'settings'
                 ? 'bg-[#D4A437]/10 text-[#D4A437] border-l-2 border-[#D4A437]'
@@ -616,7 +648,7 @@ export default function AdminPage() {
           </button>
 
           <button
-            onClick={() => setActiveTab('logs')}
+            onClick={() => { setActiveTab('logs'); setAdminSidebarOpen(false); }}
             className={`w-full text-left px-4.5 py-3 rounded-xl text-xs font-bold transition-all flex items-center gap-3 ${
               activeTab === 'logs'
                 ? 'bg-[#D4A437]/10 text-[#D4A437] border-l-2 border-[#D4A437]'
@@ -629,7 +661,7 @@ export default function AdminPage() {
         </aside>
 
         {/* Dynamic Workspace Container */}
-        <main className="flex-1 p-6 overflow-y-auto max-w-7xl mx-auto w-full space-y-6">
+        <main className="flex-1 p-4 md:p-6 overflow-y-auto max-w-7xl mx-auto w-full space-y-6">
           
           {/* TAB 1: EXECUTIVE OVERVIEW */}
           {activeTab === 'overview' && (
@@ -784,8 +816,8 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              <Card className="overflow-hidden overflow-x-auto border-white/5">
-                <table className="w-full text-left border-collapse min-w-[900px]">
+              <Card className="overflow-hidden border-white/5 bg-transparent md:bg-zinc-950/20">
+                <table className="w-full text-left border-collapse min-w-[900px] hidden md:table">
                   <thead>
                     <tr className="border-b border-white/5 bg-white/[0.01] text-[10px] font-bold text-gray-400 uppercase">
                       <th className="px-6 py-4">Venue Details</th>
@@ -894,6 +926,99 @@ export default function AdminPage() {
                     )}
                   </tbody>
                 </table>
+
+                {/* Mobile Card List CRM */}
+                <div className="md:hidden space-y-4 p-1">
+                  {filteredRestaurants.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500 text-xs bg-black/20 rounded-2xl border border-white/5">
+                      No restaurants found matching search parameters.
+                    </div>
+                  ) : (
+                    filteredRestaurants.map((res) => {
+                      const isSuspended = res.subStatus === 'CANCELLED';
+                      return (
+                        <div key={res.id} className="p-4 bg-zinc-950/60 border border-white/5 rounded-2xl flex flex-col gap-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              {res.logo ? (
+                                <img src={res.logo} className="w-8 h-8 rounded-lg object-cover" />
+                              ) : (
+                                <div className="w-8 h-8 bg-white/5 rounded-lg flex items-center justify-center text-xs font-bold text-white shrink-0">
+                                  {res.name.charAt(0)}
+                                </div>
+                              )}
+                              <div className="text-left">
+                                <span className="font-bold text-white block truncate max-w-[150px]">{res.name}</span>
+                                <a href={`/r/${res.slug}`} target="_blank" className="text-[10px] text-[#D4A437] hover:underline flex items-center gap-0.5">
+                                  /r/{res.slug} <ExternalLink className="w-2.5 h-2.5 animate-pulse" />
+                                </a>
+                              </div>
+                            </div>
+                            <Badge variant={isSuspended ? 'error' : 'success'}>
+                              {isSuspended ? 'Suspended' : 'Active'}
+                            </Badge>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2 text-[11px] text-gray-400 bg-white/[0.01] p-2.5 rounded-xl border border-white/[0.03] text-left">
+                            <div>
+                              <span className="block text-[9px] text-gray-500 font-bold uppercase mb-0.5">Owner</span>
+                              <span className="text-white truncate block">{res.ownerName}</span>
+                              <span className="text-gray-500 block truncate">{res.ownerEmail}</span>
+                            </div>
+                            <div>
+                              <span className="block text-[9px] text-gray-500 font-bold uppercase mb-0.5">Subscription</span>
+                              <span className="text-white block font-semibold">{res.planName}</span>
+                              <span className="text-gray-500 block font-mono text-[10px] truncate">
+                                Exp: {res.expiryDate ? new Date(res.expiryDate).toLocaleDateString() : 'N/A'}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex justify-between items-center text-[10px] text-gray-500 font-mono">
+                            <span>Profiles: <strong>{res.profilesCount}</strong></span>
+                            <span>Dishes: <strong>{res.dishesCount}</strong></span>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-white/[0.03]">
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => {
+                                setActiveSubModalRes(res);
+                                const matchingPlan = plans.find(p => p.name === res.planName);
+                                setSubPlanId(matchingPlan?.id || '');
+                                setSubStatus(res.subStatus || 'ACTIVE');
+                                setSubEndDate(res.expiryDate ? new Date(res.expiryDate).toISOString().split('T')[0] : '');
+                              }}
+                              className="h-8 flex-1 text-[10px] gap-1 cursor-pointer"
+                            >
+                              <Sliders className="w-3 h-3 text-[#D4A853]" /> Plan
+                            </Button>
+
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => handleImpersonate(res.id, res.slug)}
+                              className="h-8 flex-1 text-[10px] gap-1 cursor-pointer"
+                            >
+                              <UserCheck className="w-3 h-3 text-[#D4A437]" /> Login
+                            </Button>
+
+                            <Button
+                              variant={isSuspended ? 'primary' : 'danger'}
+                              size="sm"
+                              onClick={() => handleSuspendToggle(res.id, res.subStatus)}
+                              isLoading={actionLoadingId === res.id}
+                              className="h-8 flex-1 text-[10px]"
+                            >
+                              {isSuspended ? 'Activate' : 'Suspend'}
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
               </Card>
             </div>
           )}
@@ -906,8 +1031,8 @@ export default function AdminPage() {
                 <p className="text-gray-400 text-xs mt-0.5">Approve or reject pending subscription payments.</p>
               </div>
 
-              <Card className="overflow-hidden overflow-x-auto border-white/5">
-                <table className="w-full text-left border-collapse min-w-[800px]">
+              <Card className="overflow-hidden border-white/5 bg-transparent md:bg-zinc-950/20">
+                <table className="w-full text-left border-collapse min-w-[800px] hidden md:table">
                   <thead>
                     <tr className="border-b border-white/5 bg-white/[0.01] text-[10px] font-bold text-gray-400 uppercase">
                       <th className="px-6 py-4">Restaurant</th>
@@ -983,6 +1108,71 @@ export default function AdminPage() {
                     )}
                   </tbody>
                 </table>
+
+                {/* Mobile Card List: Upgrade Approvals */}
+                <div className="md:hidden space-y-4 p-1">
+                  {upgradeRequests.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500 text-xs bg-black/20 rounded-2xl border border-white/5">
+                      No upgrade requests logged in the database.
+                    </div>
+                  ) : (
+                    upgradeRequests.map((req) => (
+                      <div key={req.id} className="p-4 bg-zinc-950/60 border border-white/5 rounded-2xl flex flex-col gap-3">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-white text-left block truncate max-w-[180px]">
+                            {req.restaurant?.name || 'Unknown'}
+                          </span>
+                          <Badge variant={req.status === 'PENDING' ? 'warning' : req.status === 'APPROVED' ? 'success' : 'error'}>
+                            {req.status}
+                          </Badge>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 text-[11px] text-gray-400 bg-white/[0.01] p-2.5 rounded-xl border border-white/[0.03] text-left">
+                          <div>
+                            <span className="block text-[9px] text-gray-500 font-bold uppercase mb-0.5">Requested Plan</span>
+                            <Badge variant="gold">{req.plan?.name}</Badge>
+                            <span className="text-[10px] text-gray-500 font-mono block mt-1">Cycle: {req.billingCycle}</span>
+                          </div>
+                          <div>
+                            <span className="block text-[9px] text-gray-500 font-bold uppercase mb-0.5">Amount & UTR</span>
+                            <span className="text-emerald-400 font-bold block">${req.amount.toFixed(2)}</span>
+                            <span className="text-[10px] text-gray-500 font-mono block mt-0.5 truncate max-w-full">
+                              UTR: {req.referenceNo || 'None'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-between items-center text-[10px] text-gray-500 font-mono">
+                          <span>Date: {new Date(req.createdAt).toLocaleDateString()}</span>
+                        </div>
+
+                        <div className="flex items-center gap-2 pt-2 border-t border-white/[0.03]">
+                          {req.paymentProof && (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => setViewProofUrl(req.paymentProof)}
+                              className="h-8 flex-1 text-[10px] cursor-pointer"
+                            >
+                              View Proof
+                            </Button>
+                          )}
+                          
+                          {req.status === 'PENDING' && (
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              onClick={() => setActiveApprovalReq(req)}
+                              className="h-8 flex-1 text-[10px] cursor-pointer"
+                            >
+                              Process Verification
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </Card>
             </div>
           )}
@@ -995,8 +1185,8 @@ export default function AdminPage() {
                 <p className="text-gray-400 text-xs mt-0.5">Logs of all manual bank transfers and verification records.</p>
               </div>
 
-              <Card className="overflow-hidden overflow-x-auto border-white/5">
-                <table className="w-full text-left border-collapse min-w-[800px]">
+              <Card className="overflow-hidden border-white/5 bg-transparent md:bg-zinc-950/20">
+                <table className="w-full text-left border-collapse min-w-[800px] hidden md:table">
                   <thead>
                     <tr className="border-b border-white/5 bg-white/[0.01] text-[10px] font-bold text-gray-400 uppercase">
                       <th className="px-6 py-4">UTR Reference</th>
@@ -1046,6 +1236,47 @@ export default function AdminPage() {
                     )}
                   </tbody>
                 </table>
+
+                {/* Mobile Card List: Payments Ledger */}
+                <div className="md:hidden space-y-4 p-1">
+                  {payments.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500 text-xs bg-black/20 rounded-2xl border border-white/5">
+                      No payment transactions recorded in log ledger.
+                    </div>
+                  ) : (
+                    payments.map((pay) => (
+                      <div key={pay.id} className="p-4 bg-zinc-950/60 border border-white/5 rounded-2xl flex flex-col gap-3">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-gray-300 text-left truncate max-w-[180px]">
+                            {pay.restaurant?.name || 'Unknown'}
+                          </span>
+                          <Badge variant={pay.status === 'VERIFIED' ? 'success' : pay.status === 'PENDING' ? 'warning' : 'error'}>
+                            {pay.status}
+                          </Badge>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 text-[11px] text-gray-400 bg-white/[0.01] p-2.5 rounded-xl border border-white/[0.03] text-left">
+                          <div>
+                            <span className="block text-[9px] text-gray-500 font-bold uppercase mb-0.5">UTR Reference</span>
+                            <span className="font-mono text-white block truncate">{pay.referenceNo || 'MANUAL-ACT'}</span>
+                            <span className="text-[10px] text-gray-500 font-mono block mt-1">Mode: {pay.paymentMode}</span>
+                          </div>
+                          <div>
+                            <span className="block text-[9px] text-gray-500 font-bold uppercase mb-0.5">Financial Breakup</span>
+                            <span className="text-gray-400 block font-mono text-[10px]">Subtotal: ${pay.amount.toFixed(2)}</span>
+                            <span className="text-emerald-400 block font-bold font-mono text-[11px]">
+                              Total: ${(pay.amount + (pay.gstAmount || 0)).toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-between items-center text-[10px] text-gray-500 font-mono">
+                          <span>Date: {new Date(pay.createdAt).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </Card>
             </div>
           )}
@@ -1267,8 +1498,8 @@ export default function AdminPage() {
                 <p className="text-gray-400 text-xs mt-0.5">Logging ledger reporting all modifications, upgrades, and suspensions.</p>
               </div>
 
-              <Card className="overflow-hidden overflow-x-auto border-white/5">
-                <table className="w-full text-left border-collapse min-w-[700px]">
+              <Card className="overflow-hidden border-white/5 bg-transparent md:bg-zinc-950/20">
+                <table className="w-full text-left border-collapse min-w-[700px] hidden md:table">
                   <thead>
                     <tr className="border-b border-white/5 bg-white/[0.01] text-[10px] font-bold text-gray-400 uppercase">
                       <th className="px-6 py-4">Action</th>
@@ -1306,6 +1537,36 @@ export default function AdminPage() {
                     )}
                   </tbody>
                 </table>
+
+                {/* Mobile Card List: Compliance Logs */}
+                <div className="md:hidden space-y-4 p-1">
+                  {auditLogs.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500 text-xs bg-black/20 rounded-2xl border border-white/5">
+                      No audit logs registered in trail database.
+                    </div>
+                  ) : (
+                    auditLogs.map((log) => (
+                      <div key={log.id} className="p-4 bg-zinc-950/60 border border-white/5 rounded-2xl flex flex-col gap-2.5 text-left">
+                        <div className="flex justify-between items-center">
+                          <span className="font-mono text-[10px] text-white bg-white/5 px-2 py-0.5 rounded">
+                            {log.action}
+                          </span>
+                          <span className="text-[9px] text-gray-500 font-mono">
+                            {new Date(log.createdAt).toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="text-xs text-gray-300 leading-normal">
+                          {log.details}
+                        </div>
+                        {log.reason && (
+                          <div className="text-[10px] text-amber-500/80 italic font-medium leading-normal bg-amber-500/5 border border-amber-500/10 p-1.5 rounded-lg">
+                            Reason: {log.reason}
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
               </Card>
             </div>
           )}
@@ -1330,8 +1591,8 @@ export default function AdminPage() {
 
       {/* SLIDE-OVER PANEL: PROCESS APPROVAL DETAILS */}
       {activeApprovalReq && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/80 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md bg-zinc-950 border-l border-white/5 h-full p-6 flex flex-col justify-between text-left">
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/80 backdrop-blur-sm p-0 sm:p-4">
+          <div className="w-full sm:max-w-md bg-zinc-950 border-l border-white/5 h-full p-6 flex flex-col justify-between text-left">
             <div className="space-y-6 overflow-y-auto">
               <div className="flex justify-between items-center">
                 <h3 className="font-serif text-lg font-bold text-white">Upgrade Request Detail</h3>

@@ -103,7 +103,7 @@ export default function SettingsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
         {/* Profile Card */}
-        <div className="glass p-6 sm:p-8 rounded-3xl space-y-6">
+        <div className="glass p-4 sm:p-6 md:p-8 rounded-3xl space-y-6">
           <h3 className="text-lg font-bold border-b border-gray-900 pb-3 flex items-center gap-2">
             <User className="w-5 h-5 text-[#D4A437]" /> User Information
           </h3>
@@ -146,7 +146,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Password Card */}
-        <div className="glass p-6 sm:p-8 rounded-3xl space-y-6">
+        <div className="glass p-4 sm:p-6 md:p-8 rounded-3xl space-y-6">
           <h3 className="text-lg font-bold border-b border-gray-900 pb-3 flex items-center gap-2">
             <Lock className="w-5 h-5 text-[#D4A437]" /> Security settings
           </h3>

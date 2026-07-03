@@ -3,9 +3,9 @@
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
-import { ExternalLink, HelpCircle, Bell } from 'lucide-react';
+import { ExternalLink, HelpCircle, Bell, Menu } from 'lucide-react';
 
-export default function DashboardHeader() {
+export default function DashboardHeader({ onMenuClick }: { onMenuClick?: () => void }) {
   const { data: session } = useSession();
   const pathname = usePathname();
   const slug = session?.user?.restaurantSlug;
@@ -34,29 +34,38 @@ export default function DashboardHeader() {
   };
 
   return (
-    <header className="h-16 bg-[#09090B] border-b border-white/[0.04] flex items-center justify-between px-8 sticky top-0 z-10">
-      <div className="text-left">
-        <h2 className="text-sm font-bold text-white tracking-wide">
-          {getPageTitle()}
-        </h2>
-        <p className="text-[10px] text-gray-500 mt-0.5 leading-none">{getPageSubtitle()}</p>
+    <header className="h-16 bg-[#09090B] border-b border-white/[0.04] flex items-center justify-between px-4 md:px-8 sticky top-0 z-30 w-full backdrop-blur-md bg-opacity-80">
+      <div className="flex items-center gap-3 text-left min-w-0">
+        {/* Hamburger Toggle */}
+        <button
+          onClick={onMenuClick}
+          className="p-2 -ml-2 rounded-lg hover:bg-white/[0.03] text-gray-400 hover:text-white transition-all cursor-pointer md:hidden block focus:outline-none shrink-0"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+        <div className="min-w-0">
+          <h2 className="text-sm font-bold text-white tracking-wide truncate">
+            {getPageTitle()}
+          </h2>
+          <p className="text-[10px] text-gray-500 mt-0.5 leading-none hidden sm:block truncate">{getPageSubtitle()}</p>
+        </div>
       </div>
 
-      <div className="flex items-center gap-5">
+      <div className="flex items-center gap-2 md:gap-5 shrink-0">
         {slug ? (
           <Link
             href={`/r/${slug}`}
             target="_blank"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] text-white text-[11px] font-semibold transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] text-white text-[10px] md:text-[11px] font-semibold transition-all cursor-pointer shrink-0"
           >
-            <span>View Live Menu</span>
-            <ExternalLink className="w-3.5 h-3.5 text-gray-400" />
+            <span className="hidden xs:inline">View Live Menu</span>
+            <ExternalLink className="w-3 h-3 md:w-3.5 md:h-3.5 text-gray-400" />
           </Link>
         ) : (
-          <span className="text-[11px] text-gray-500 font-medium">No active URL</span>
+          <span className="text-[10px] md:text-[11px] text-gray-500 font-medium hidden xs:inline">No active URL</span>
         )}
 
-        <div className="flex items-center gap-1 text-gray-400">
+        <div className="flex items-center gap-0.5 text-gray-400">
           <button className="p-2 rounded-lg hover:bg-white/[0.03] hover:text-white transition-all cursor-pointer">
             <Bell className="w-4 h-4" />
           </button>

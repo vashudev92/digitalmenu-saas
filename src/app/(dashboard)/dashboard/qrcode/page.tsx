@@ -598,7 +598,7 @@ export default function QRCodePage() {
       {/* PRINT TEMPLATE STUDIO MODAL */}
       {activePrintProfile && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm no-print">
-          <div className="w-full max-w-4xl bg-black border border-gray-900 rounded-3xl p-6 sm:p-8 relative flex flex-col md:flex-row gap-8 max-h-[95vh] overflow-y-auto">
+          <div className="w-full max-w-4xl bg-black border border-gray-900 rounded-3xl p-4 sm:p-6 md:p-8 relative flex flex-col md:flex-row gap-6 md:gap-8 max-h-[95vh] overflow-y-auto">
             <button
               onClick={() => setActivePrintProfile(null)}
               className="absolute top-5 right-5 p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-900 transition-colors cursor-pointer"
@@ -620,7 +620,7 @@ export default function QRCodePage() {
               {/* Template Selection */}
               <div className="space-y-3">
                 <label className="block text-[10px] uppercase font-bold text-gray-400 tracking-wider">Folding Standee Style</label>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {[
                     { key: 'TABLE_TENT', name: 'Table Tent', desc: 'Folds in half' },
                     { key: 'ACRYLIC_STAND', name: 'Acrylic Stand', desc: 'Standard portrait' },
