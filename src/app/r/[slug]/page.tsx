@@ -61,7 +61,7 @@ export default async function RestaurantWelcomePage({ params, searchParams }: Pr
       subscription: true,
       menuItems: {
         where: { isFeatured: true, isAvailable: true },
-        take: 1,
+        take: 6,
       },
     },
   });
@@ -145,6 +145,7 @@ export default async function RestaurantWelcomePage({ params, searchParams }: Pr
     fontHeading: resolvedFontHeading,
     fontBody: resolvedFontBody,
     openingHours: resolvedOpeningHours,
+    featuredItems: restaurant.menuItems,
   };
 
   return (
