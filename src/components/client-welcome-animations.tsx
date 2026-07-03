@@ -3,13 +3,16 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShieldCheck, Flame, Sparkles, Star, Clock, MapPin, Phone, ChefHat, ArrowUpRight } from 'lucide-react';
+import { ShieldCheck, Flame, Sparkles, Star, Clock, MapPin, ChefHat, BookOpen, Globe } from 'lucide-react';
+import { getContrastColor } from '@/lib/theme-config';
 
 interface ClientWelcomeAnimationsProps {
   restaurant: any;
   style: any;
   headingStyle: any;
   todaySpecial: any;
+  profileSlug?: string | null;
+  brandStyles: React.CSSProperties;
 }
 
 export default function ClientWelcomeAnimations({
@@ -17,28 +20,36 @@ export default function ClientWelcomeAnimations({
   style,
   headingStyle,
   todaySpecial,
+  profileSlug,
+  brandStyles,
 }: ClientWelcomeAnimationsProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoading(false);
-    }, 1400);
+    }, 1500);
     return () => clearTimeout(timer);
   }, []);
 
   return (
-    <>
+    <div 
+      className={`min-h-screen w-full overflow-x-hidden ${style.bg} ${style.text} flex flex-col justify-between max-w-[480px] mx-auto relative shadow-2xl pb-28`} 
+      style={brandStyles}
+    >
       {/* WOW Moment Entry Loader */}
       <AnimatePresence>
         {loading && (
           <motion.div
             initial={{ opacity: 1 }}
-            exit={{ opacity: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             className="fixed inset-0 z-50 flex flex-col items-center justify-center p-6"
             style={{
-              backgroundColor: restaurant.primaryColor ? `${restaurant.primaryColor}0d` : '#050505',
-              backgroundImage: 'radial-gradient(circle at center, rgba(212,168,83,0.08) 0%, rgba(5,5,5,1) 80%)'
+              backgroundColor: style.previewBg || '#050505',
+              backgroundImage: style.layoutMode === 'luxury' || style.layoutMode === 'indian'
+                ? 'radial-gradient(circle at center, rgba(212,168,83,0.06) 0%, rgba(5,5,5,0) 80%)'
+                : undefined
             }}
           >
             <motion.div
@@ -51,13 +62,13 @@ export default function ClientWelcomeAnimations({
                 <motion.img
                   src={restaurant.logo}
                   alt="Logo"
-                  animate={{ opacity: [0.5, 1, 0.5], scale: [0.98, 1.02, 0.98] }}
+                  animate={{ opacity: [0.6, 1, 0.6], scale: [0.99, 1.01, 0.99] }}
                   transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
                   className="w-16 h-16 object-cover rounded-full border border-white/10 shadow-2xl"
                 />
               ) : (
                 <motion.div
-                  animate={{ opacity: [0.5, 1, 0.5], scale: [0.98, 1.02, 0.98] }}
+                  animate={{ opacity: [0.6, 1, 0.6], scale: [0.99, 1.01, 0.99] }}
                   transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
                   className="p-4 bg-white/[0.02] border border-white/10 rounded-full"
                 >
@@ -76,17 +87,87 @@ export default function ClientWelcomeAnimations({
         )}
       </AnimatePresence>
 
-      {/* Main Content Entrance Transition */}
-      <AnimatePresence>
-        {!loading && (
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="space-y-10 mt-6"
-          >
+      {/* Main content, entirely hidden while loading, animates in cleanly */}
+      {!loading && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="flex flex-col h-full justify-between"
+        >
+          <div>
+            {/* Header section */}
+            <header 
+              className={`px-5 py-4 flex flex-col items-center justify-center z-10 sticky top-0 ${style.headerBg} backdrop-blur-md border-b ${style.divider} ${
+                style.layoutMode === 'japanese' ? 'border-b-2 border-black' : ''
+              }`}
+            >
+              <div className="flex flex-col items-center">
+                {restaurant.logo ? (
+                  <img 
+                    src={restaurant.logo} 
+                    alt="Logo" 
+                    className={`w-8 h-8 object-cover mb-1.5 border border-white/5 ${
+                      style.layoutMode === 'cafe' ? 'rounded-2xl' : 
+                      style.layoutMode === 'japanese' ? 'rounded-none border border-black' : 'rounded-full'
+                    }`} 
+                  />
+                ) : (
+                  <ChefHat className="w-5 h-5 mb-1" style={{ color: restaurant.primaryColor || style.accentHex }} />
+                )}
+                <span 
+                  className={`font-bold tracking-widest uppercase ${
+                    style.layoutMode === 'luxury' ? 'font-serif text-xs text-[#D4A853]' :
+                    style.layoutMode === 'japanese' ? 'font-mono text-xs font-black' : 'text-xs'
+                  }`} 
+                  style={headingStyle}
+                >
+                  {restaurant.name}
+                </span>
+              </div>
+            </header>
+
+            {/* Hero Cover */}
+            <div className={`px-4 mt-5 ${style.layoutMode === 'japanese' ? 'px-0 mt-0' : ''}`}>
+              <div 
+                className={`relative overflow-hidden bg-zinc-950 ${
+                  style.layoutMode === 'luxury' ? 'rounded-none border-t border-b border-[#D4A853]/30 h-[300px]' : 
+                  style.layoutMode === 'cafe' ? 'rounded-[2rem] h-[260px]' :
+                  style.layoutMode === 'japanese' ? 'rounded-none h-[320px]' :
+                  style.layoutMode === 'bistro' ? 'rounded-xl border border-white/5 h-[260px]' :
+                  style.layoutMode === 'indian' ? 'rounded-2xl border border-[#E8973F]/30 h-[280px]' :
+                  'rounded-[1.5rem] h-[270px]' // beach layout
+                }`}
+              >
+                {restaurant.banner ? (
+                  <img src={restaurant.banner} alt="Food Cover" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-b from-zinc-900 to-black" />
+                )}
+                
+                {/* Themed Hero overlay gradient */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent flex flex-col justify-end p-6">
+                  <h2 
+                    className={`text-white text-2xl font-bold leading-tight tracking-wide ${
+                      style.layoutMode === 'luxury' ? 'font-serif uppercase' :
+                      style.layoutMode === 'japanese' ? 'font-mono uppercase' : ''
+                    }`} 
+                    style={headingStyle}
+                  >
+                    {restaurant.bannerTitle1 || 'Good Food'}<br />
+                    <span style={{ color: restaurant.primaryColor || style.accentHex }}>
+                      {restaurant.bannerTitle2 || 'Great Mood'}
+                    </span>
+                  </h2>
+                  <p className="text-gray-300 text-[10px] mt-2 font-medium max-w-xs opacity-80">
+                    {restaurant.bannerSubtitle || "Discover our chef's special selection just for you."}
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Badges Grid */}
-            <div className={`grid grid-cols-3 gap-3 px-4 ${style.layoutMode === 'japanese' ? 'px-3 mt-4' : ''}`}>
+            <div className={`grid grid-cols-3 gap-3 px-4 mt-6 ${style.layoutMode === 'japanese' ? 'px-3' : ''}`}>
               {[
                 { Icon: ShieldCheck, title: restaurant.badge1Title || 'Hygienic', desc: restaurant.badge1Desc || 'Kitchen' },
                 { Icon: Flame, title: restaurant.badge2Title || 'Fresh', desc: restaurant.badge2Desc || 'Ingredients' },
@@ -112,7 +193,7 @@ export default function ClientWelcomeAnimations({
             </div>
 
             {/* Restaurant Storytelling Section */}
-            <div className="px-4 text-center space-y-6">
+            <div className="px-4 text-center space-y-6 mt-10">
               <div className="flex flex-col items-center">
                 <span className="w-8 h-[1px] bg-[#D4A853]/40 mb-3" style={{ backgroundColor: restaurant.primaryColor ? `${restaurant.primaryColor}40` : undefined }} />
                 <h3 className="text-[9px] uppercase tracking-[0.2em] text-gray-500 font-bold mb-1">
@@ -155,7 +236,7 @@ export default function ClientWelcomeAnimations({
             </div>
 
             {/* Today's Special */}
-            <div className="px-4">
+            <div className="px-4 mt-10">
               <h3 
                 className={`text-sm font-bold mb-3 flex items-center gap-1.5 ${
                   style.layoutMode === 'luxury' ? 'font-serif uppercase tracking-widest text-[#D4A853]' :
@@ -167,7 +248,7 @@ export default function ClientWelcomeAnimations({
               </h3>
 
               <Link
-                href={`/r/${restaurant.slug}/menu`}
+                href={profileSlug ? `/r/${restaurant.slug}/${profileSlug}` : `/r/${restaurant.slug}/menu`}
                 className={`p-4 border flex gap-4 items-center justify-between shadow-sm hover:-translate-y-0.5 active:scale-[0.99] transition-all duration-300 ${style.cardBg} ${style.cardRadius}`}
                 style={{ borderColor: restaurant.primaryColor ? `${restaurant.primaryColor}15` : undefined }}
               >
@@ -226,7 +307,7 @@ export default function ClientWelcomeAnimations({
             </div>
 
             {/* Details & Location */}
-            <div className="px-4 pb-8 space-y-4 text-left">
+            <div className="px-4 pb-8 space-y-4 text-left mt-10">
               <div className="flex items-center gap-3">
                 <span className="h-[1px] flex-1 bg-white/5" />
                 <h3 
@@ -308,9 +389,27 @@ export default function ClientWelcomeAnimations({
                 )}
               </div>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
+          </div>
+
+          {/* Floating Bottom Menu Bar */}
+          <div className="fixed bottom-5 left-0 right-0 mx-auto w-[90%] max-w-[400px] z-40 px-3 no-print">
+            <Link
+              href={profileSlug ? `/r/${restaurant.slug}/${profileSlug}` : `/r/${restaurant.slug}/menu`}
+              className={`w-full py-3.5 flex items-center justify-center gap-2.5 shadow-2xl transition-all active:scale-[0.98] ${style.primaryBtn}`}
+              style={{
+                background: restaurant.primaryColor
+                  ? `linear-gradient(135deg, ${restaurant.primaryColor} 0%, ${restaurant.secondaryColor || restaurant.primaryColor} 100%)`
+                  : undefined,
+                color: restaurant.primaryColor ? getContrastColor(restaurant.primaryColor).color : undefined,
+                borderRadius: style.layoutMode === 'cafe' ? '9999px' : style.layoutMode === 'japanese' ? '0px' : undefined
+              }}
+            >
+              <BookOpen className="w-4 h-4 shrink-0" />
+              <span className="text-xs font-bold tracking-widest uppercase">Browse Menu</span>
+            </Link>
+          </div>
+        </motion.div>
+      )}
+    </div>
   );
 }

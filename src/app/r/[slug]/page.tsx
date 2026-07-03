@@ -148,109 +148,13 @@ export default async function RestaurantWelcomePage({ params, searchParams }: Pr
   };
 
   return (
-    <div 
-      className={`min-h-screen w-full overflow-x-hidden ${style.bg} ${style.text} flex flex-col justify-between max-w-[480px] mx-auto relative shadow-2xl pb-28`} 
-      style={brandStyles}
-    >
-      <FontLoader headingFont={resolvedRestaurant.fontHeading} bodyFont={resolvedRestaurant.fontBody} />
-      
-      <div>
-        {/* Header section */}
-        <header 
-          className={`px-5 py-4 flex flex-col items-center justify-center z-10 sticky top-0 ${style.headerBg} backdrop-blur-md border-b ${style.divider} ${
-            style.layoutMode === 'japanese' ? 'border-b-2 border-black' : ''
-          }`}
-        >
-          <div className="flex flex-col items-center">
-            {resolvedRestaurant.logo ? (
-              <img 
-                src={resolvedRestaurant.logo} 
-                alt="Logo" 
-                className={`w-8 h-8 object-cover mb-1.5 border border-white/5 ${
-                  style.layoutMode === 'cafe' ? 'rounded-2xl' : 
-                  style.layoutMode === 'japanese' ? 'rounded-none border border-black' : 'rounded-full'
-                }`} 
-              />
-            ) : (
-              <ChefHat className="w-5 h-5 mb-1" style={{ color: resolvedRestaurant.primaryColor || style.accentHex }} />
-            )}
-            <span 
-              className={`font-bold tracking-widest uppercase ${
-                style.layoutMode === 'luxury' ? 'font-serif text-xs text-[#D4A853]' :
-                style.layoutMode === 'japanese' ? 'font-mono text-xs font-black' : 'text-xs'
-              }`} 
-              style={headingStyle}
-            >
-              {resolvedRestaurant.name}
-            </span>
-          </div>
-        </header>
-
-        {/* Hero Cover */}
-        <div className={`px-4 mt-5 ${style.layoutMode === 'japanese' ? 'px-0 mt-0' : ''}`}>
-          <div 
-            className={`relative overflow-hidden bg-zinc-950 ${
-              style.layoutMode === 'luxury' ? 'rounded-none border-t border-b border-[#D4A853]/30 h-[300px]' : 
-              style.layoutMode === 'cafe' ? 'rounded-[2rem] h-[260px]' :
-              style.layoutMode === 'japanese' ? 'rounded-none h-[320px]' :
-              style.layoutMode === 'bistro' ? 'rounded-xl border border-white/5 h-[260px]' :
-              style.layoutMode === 'indian' ? 'rounded-2xl border border-[#E8973F]/30 h-[280px]' :
-              'rounded-[1.5rem] h-[270px]' // beach layout
-            }`}
-          >
-            {resolvedRestaurant.banner ? (
-              <img src={resolvedRestaurant.banner} alt="Food Cover" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-b from-zinc-900 to-black" />
-            )}
-            
-            {/* Themed Hero overlay gradient */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent flex flex-col justify-end p-6">
-              <h2 
-                className={`text-white text-2xl font-bold leading-tight tracking-wide ${
-                  style.layoutMode === 'luxury' ? 'font-serif uppercase' :
-                  style.layoutMode === 'japanese' ? 'font-mono uppercase' : ''
-                }`} 
-                style={headingStyle}
-              >
-                {resolvedRestaurant.bannerTitle1 || 'Good Food'}<br />
-                <span style={{ color: resolvedRestaurant.primaryColor || style.accentHex }}>
-                  {resolvedRestaurant.bannerTitle2 || 'Great Mood'}
-                </span>
-              </h2>
-              <p className="text-gray-300 text-[10px] mt-2 font-medium max-w-xs opacity-80">
-                {resolvedRestaurant.bannerSubtitle || "Discover our chef's special selection just for you."}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Client Welcome animations / layout tags */}
-        <ClientWelcomeAnimations 
-          restaurant={resolvedRestaurant} 
-          style={style} 
-          headingStyle={headingStyle}
-          todaySpecial={todaySpecial}
-        />
-      </div>
-
-      {/* Floating Bottom Menu Bar */}
-      <div className="fixed bottom-5 left-0 right-0 mx-auto w-[90%] max-w-[400px] z-40 px-3 no-print">
-        <Link
-          href={profileSlug ? `/r/${slug}/${profileSlug}` : `/r/${slug}/menu`}
-          className={`w-full py-3.5 flex items-center justify-center gap-2.5 shadow-2xl transition-all active:scale-[0.98] ${style.primaryBtn}`}
-          style={{
-            background: resolvedRestaurant.primaryColor
-              ? `linear-gradient(135deg, ${resolvedRestaurant.primaryColor} 0%, ${resolvedRestaurant.secondaryColor || resolvedRestaurant.primaryColor} 100%)`
-              : undefined,
-            color: resolvedRestaurant.primaryColor ? getContrastColor(resolvedRestaurant.primaryColor).color : undefined,
-            borderRadius: style.layoutMode === 'cafe' ? '9999px' : style.layoutMode === 'japanese' ? '0px' : undefined
-          }}
-        >
-          <BookOpen className="w-4 h-4 shrink-0" />
-          <span className="text-xs font-bold tracking-widest uppercase">Browse Menu</span>
-        </Link>
-      </div>
-    </div>
+    <ClientWelcomeAnimations 
+      restaurant={resolvedRestaurant} 
+      style={style} 
+      headingStyle={headingStyle}
+      todaySpecial={todaySpecial}
+      profileSlug={profileSlug}
+      brandStyles={brandStyles}
+    />
   );
 }
