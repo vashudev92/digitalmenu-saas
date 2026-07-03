@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   QrCode,
   Search,
@@ -17,7 +17,8 @@ import {
   ChefHat,
   X,
   Lock,
-  Loader2
+  Loader2,
+  ChevronDown
 } from 'lucide-react';
 import Link from 'next/link';
 import { THEME_LIST } from '@/lib/theme-config';
@@ -52,6 +53,27 @@ export default function QRCodePage() {
   // Filters & Searching
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'updatedAt' | 'name' | 'itemsCount' | 'categoriesCount'>('updatedAt');
+
+  // Sort Dropdown States
+  const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
+  const sortDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target as Node)) {
+        setIsSortDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const sortOptions = [
+    { value: 'updatedAt', label: 'Last Updated' },
+    { value: 'name', label: 'Name (A-Z)' },
+    { value: 'itemsCount', label: 'Dishes Count' },
+    { value: 'categoriesCount', label: 'Categories Count' }
+  ];
 
   // Copy URL state
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -439,18 +461,46 @@ export default function QRCodePage() {
         </div>
 
         {/* Sorting options */}
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <SlidersHorizontal className="w-4 h-4 text-gray-500 shrink-0" />
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as any)}
-            className="w-full sm:w-48 bg-black border border-gray-800 focus:border-[#D4A437] rounded-xl px-3 py-2.5 text-xs text-[#D4A437] font-semibold focus:outline-none cursor-pointer"
+        <div className="relative shrink-0 text-left w-full sm:w-auto" ref={sortDropdownRef}>
+          <button
+            type="button"
+            onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
+            className="w-full sm:w-52 flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl bg-black border border-gray-800 text-xs font-semibold text-gray-300 hover:text-white hover:border-[#D4A437]/30 transition-all cursor-pointer select-none"
           >
-            <option value="updatedAt">Sort by: Last Updated</option>
-            <option value="name">Sort by: Name (A-Z)</option>
-            <option value="itemsCount">Sort by: Dishes Count</option>
-            <option value="categoriesCount">Sort by: Categories Count</option>
-          </select>
+            <div className="flex items-center gap-2">
+              <SlidersHorizontal className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+              <span className="text-[#D4A437] font-bold">
+                Sort by: {sortOptions.find(o => o.value === sortBy)?.label || 'Sort Options'}
+              </span>
+            </div>
+            <ChevronDown className={`w-3.5 h-3.5 text-gray-550 transition-transform ${isSortDropdownOpen ? 'rotate-180' : ''}`} />
+          </button>
+
+          {isSortDropdownOpen && (
+            <div className="absolute left-0 sm:left-auto sm:right-0 mt-2 w-full sm:w-52 bg-[#0D0D0F] border border-white/[0.06] rounded-2xl shadow-2xl shadow-black/80 z-50 p-2 space-y-1">
+              {sortOptions.map((opt) => {
+                const isSelected = opt.value === sortBy;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => {
+                      setSortBy(opt.value as any);
+                      setIsSortDropdownOpen(false);
+                    }}
+                    className={`w-full text-left px-3 py-2.5 rounded-lg text-xs font-medium transition-colors flex items-center justify-between cursor-pointer ${
+                      isSelected
+                        ? 'bg-[#D4A437]/10 text-[#D4A437]'
+                        : 'text-gray-400 hover:bg-white/[0.01] hover:text-white'
+                    }`}
+                  >
+                    <span>{opt.label}</span>
+                    {isSelected && <Check className="w-3.5 h-3.5 text-[#D4A437]" />}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 

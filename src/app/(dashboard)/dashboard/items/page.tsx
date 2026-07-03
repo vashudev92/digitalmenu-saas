@@ -301,7 +301,7 @@ export default function MenuItemsPage() {
               </button>
 
               {isProfileDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-60 bg-[#0D0D0F] border border-white/[0.06] rounded-2xl shadow-2xl shadow-black/80 z-50 p-2 space-y-2">
+                <div className="absolute left-0 sm:left-auto sm:right-0 mt-2 w-60 bg-[#0D0D0F] border border-white/[0.06] rounded-2xl shadow-2xl shadow-black/80 z-50 p-2 space-y-2">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
                     <input
