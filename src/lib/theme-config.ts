@@ -148,6 +148,32 @@ export const THEMES: Record<string, ThemeDefinition> = {
     previewText: '#1F1F24',
   },
 
+  // ====== 3B. ZEN HARMONY (Traditional Japanese Zen Red & Gold) ======
+  ZEN_HARMONY: {
+    key: 'ZEN_HARMONY',
+    name: 'Zen Harmony',
+    description: 'Warm rice-paper backdrop, rich crimson red accents, vertical category sidebar, and Seigaiha wave motifs',
+    layoutMode: 'japanese',
+    bg: 'bg-[#FAF7F2]',
+    text: 'text-[#1F1F24]',
+    muted: 'text-[#55534E]',
+    headerBg: 'bg-[#FAF7F2]/95',
+    cardBg: 'bg-white border-[#FAF7F2] hover:border-[#A8221E]/15 shadow-[0_4px_20px_rgba(168,34,30,0.02)] transition-all duration-300',
+    inputBg: 'bg-white border-[#E6E2D8] focus:border-[#A8221E]',
+    catActive: 'bg-[#A8221E] text-white border-[#A8221E]',
+    catInactive: 'bg-white text-[#55534E] border-[#E6E2D8] hover:bg-[#FAF7F2]',
+    accentText: 'text-[#A8221E]',
+    accentHex: '#A8221E',
+    divider: 'border-[#E6E2D8]',
+    navBg: 'bg-[#FAF7F2]/90 border-t border-[#E6E2D8]',
+    primaryBtn: 'bg-[#A8221E] hover:bg-[#8A1B18] text-white font-medium rounded-full tracking-wide uppercase',
+    cardRadius: 'rounded-3xl',
+    priceBadge: 'bg-[#A8221E]/5 text-[#A8221E] border border-[#A8221E]/10 px-2.5 py-0.5 rounded-full text-[9.5px] font-bold',
+    previewBg: '#FAF7F2',
+    previewAccent: '#A8221E',
+    previewText: '#1F1F24',
+  },
+
   // ====== 4. ITALIAN BISTRO (Warm Beige & Wine Red) ======
   ITALIAN_BISTRO: {
     key: 'ITALIAN_BISTRO',
